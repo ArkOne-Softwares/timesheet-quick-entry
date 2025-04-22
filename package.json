@@ -1,0 +1,15 @@
+{
+  "name": "arkone_projects",
+  "version": "1.0.0",
+  "description": "Simple project management that also add task and timesheet easily",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
