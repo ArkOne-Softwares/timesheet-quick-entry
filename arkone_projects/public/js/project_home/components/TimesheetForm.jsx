@@ -10,12 +10,7 @@ export default function TimesheetForm({ task, onClose }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [useExistingTimesheet, setUseExistingTimesheet] = useState(true);
     // New states for task management
-    const [isAssigningTask, setIsAssigningTask] = useState(false);
-    const [isChangingStatus, setIsChangingStatus] = useState(false);
     const [isSubmittingTimesheet, setIsSubmittingTimesheet] = useState(false);
-    const [taskStatusOptions, setTaskStatusOptions] = useState([]);
-    const [selectedStatus, setSelectedStatus] = useState('');
-    const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     
     const [formData, setFormData] = useState({
         parent: '', // Timesheet docname
@@ -32,7 +27,6 @@ export default function TimesheetForm({ task, onClose }) {
         Promise.all([
             fetchActivityTypes(),
             fetchTimesheets(),
-            fetchTaskStatusOptions()
         ]).then(() => {
             setLoading(false);
         }).catch(error => {
@@ -77,24 +71,6 @@ export default function TimesheetForm({ task, onClose }) {
         });
     };
     
-    // Fetch available task status options
-    const fetchTaskStatusOptions = async () => {
-        try {
-            const meta = await frappe.db.get_doc('DocType', 'Task');
-            const statusField = meta.fields.find(field => field.fieldname === 'status');
-            
-            if (statusField && statusField.options) {
-                const options = statusField.options.split('\n')
-                    .filter(option => option.trim() !== '');
-                
-                setTaskStatusOptions(options);
-                setSelectedStatus(task.status || options[0]);
-            }
-        } catch (error) {
-            console.error('Error fetching task status options:', error);
-        }
-    };
-
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -195,7 +171,7 @@ export default function TimesheetForm({ task, onClose }) {
                     is_billable: formData.is_billable,
                     task: formData.task,
                     parent_project: selectedProject?.name,
-                    parent: selectedProject?.name
+                    parent: formData.parent,
                 };
                 await createTimesheetEntry(timesheetDetail);
             } else {

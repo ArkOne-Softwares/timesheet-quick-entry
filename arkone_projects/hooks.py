@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["frappe", "erpnext"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -86,7 +86,8 @@ app_license = "mit"
 # ------------
 
 # before_install = "arkone_projects.install.before_install"
-# after_install = "arkone_projects.install.after_install"
+after_install = "arkone_projects.setup.setup.after_install"
+after_migrate = "arkone_projects.setup.setup.after_migrate"
 
 # Uninstallation
 # ------------
