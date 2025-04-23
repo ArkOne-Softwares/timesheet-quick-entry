@@ -153,6 +153,123 @@ export function ProjectProvider({ children }) {
     });
   };
 
+  // Function to assign task to current user
+  const assignTaskToSelf = async (taskId) => {
+    try {
+      // Get employee data for current user
+      const employeeData = await frappe.db.get_list('Employee', { 
+          filters: { user_id: frappe.session.user },
+          fields: ['name']
+      });
+      
+      if (!employeeData || employeeData.length === 0) {
+          throw new Error("Could not find an employee record for the current user");
+      }
+      
+      // Update the task
+      await frappe.db.set_value('Task', taskId, {
+          '_assign': JSON.stringify([frappe.session.user])
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error assigning task to self:', error);
+      throw error;
+    }
+  };
+  
+  // Function to update task status
+  const updateTaskStatus = async (taskId, status) => {
+    try {
+      await frappe.db.set_value('Task', taskId, { status });
+      
+      // If marking as completed, set the completed_by and completed_on fields
+      if (status === 'Completed') {
+        const employeeData = await frappe.db.get_list('Employee', { 
+          filters: { user_id: frappe.session.user },
+          fields: ['name']
+        });
+        
+        if (employeeData && employeeData.length > 0) {
+          await frappe.db.set_value('Task', taskId, {
+            completed_by: employeeData[0].name,
+            completed_on: frappe.datetime.now_datetime()
+          });
+        }
+      }
+      
+      // Refresh the task list
+      if (state.selectedProject) {
+        fetchTasksForProject(state.selectedProject.name);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      throw error;
+    }
+  };
+  
+  // Function to submit timesheet and complete task
+  const submitTimesheetAndCompleteTask = async (timesheetDoc, taskId) => {
+    try {
+      // Submit the timesheet
+      await frappe.call({
+        method: 'frappe.client.submit',
+        args: {
+          doc: {
+            doctype: 'Timesheet',
+            name: timesheetDoc
+          }
+        }
+      });
+      
+      // Get employee data for current user
+      const employeeData = await frappe.db.get_list('Employee', { 
+        filters: { user_id: frappe.session.user },
+        fields: ['name']
+      });
+      
+      if (!employeeData || employeeData.length === 0) {
+        throw new Error("Could not find an employee record for the current user");
+      }
+      
+      // Update the task as completed
+      await frappe.db.set_value('Task', taskId, {
+        status: 'Completed',
+        completed_by: employeeData[0].name,
+        completed_on: frappe.datetime.now_datetime()
+      });
+      
+      // Refresh the task list
+      if (state.selectedProject) {
+        fetchTasksForProject(state.selectedProject.name);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error submitting timesheet and completing task:', error);
+      throw error;
+    }
+  };
+  
+  // Function to get task's available status options
+  const getTaskStatusOptions = async () => {
+    try {
+      const meta = await frappe.db.get_doc('DocType', 'Task');
+      const statusField = meta.fields.find(field => field.fieldname === 'status');
+      
+      if (statusField && statusField.options) {
+        return statusField.options.split('\n')
+          .filter(option => option.trim() !== '');
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching task status options:', error);
+      throw error;
+    }
+  };
+
   // Value object to be provided to consumers
   const value = {
     projects: state.projects,
@@ -171,7 +288,11 @@ export function ProjectProvider({ children }) {
     fetchTasksForProject,
     createTask,
     setSelectedTask,
-    createTimesheetEntry
+    createTimesheetEntry,
+    assignTaskToSelf,
+    updateTaskStatus,
+    submitTimesheetAndCompleteTask,
+    getTaskStatusOptions
   };
 
   return (

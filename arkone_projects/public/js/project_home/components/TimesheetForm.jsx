@@ -9,7 +9,14 @@ export default function TimesheetForm({ task, onClose }) {
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [useExistingTimesheet, setUseExistingTimesheet] = useState(true);
-
+    // New states for task management
+    const [isAssigningTask, setIsAssigningTask] = useState(false);
+    const [isChangingStatus, setIsChangingStatus] = useState(false);
+    const [isSubmittingTimesheet, setIsSubmittingTimesheet] = useState(false);
+    const [taskStatusOptions, setTaskStatusOptions] = useState([]);
+    const [selectedStatus, setSelectedStatus] = useState('');
+    const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+    
     const [formData, setFormData] = useState({
         parent: '', // Timesheet docname
         activity_type: '',
@@ -20,11 +27,12 @@ export default function TimesheetForm({ task, onClose }) {
         task: task.name,
     });
 
-    // Fetch activity types and timesheets when component mounts
+    // Fetch activity types, timesheets, and task statuses when component mounts
     useEffect(() => {
         Promise.all([
             fetchActivityTypes(),
-            fetchTimesheets()
+            fetchTimesheets(),
+            fetchTaskStatusOptions()
         ]).then(() => {
             setLoading(false);
         }).catch(error => {
@@ -68,6 +76,24 @@ export default function TimesheetForm({ task, onClose }) {
             }
         });
     };
+    
+    // Fetch available task status options
+    const fetchTaskStatusOptions = async () => {
+        try {
+            const meta = await frappe.db.get_doc('DocType', 'Task');
+            const statusField = meta.fields.find(field => field.fieldname === 'status');
+            
+            if (statusField && statusField.options) {
+                const options = statusField.options.split('\n')
+                    .filter(option => option.trim() !== '');
+                
+                setTaskStatusOptions(options);
+                setSelectedStatus(task.status || options[0]);
+            }
+        } catch (error) {
+            console.error('Error fetching task status options:', error);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -79,6 +105,79 @@ export default function TimesheetForm({ task, onClose }) {
 
     const toggleTimesheetMode = () => {
         setUseExistingTimesheet(prev => !prev);
+    };
+
+    // Submit timesheet and complete task
+    const submitTimesheetAndCompleteTask = async () => {
+        setIsSubmittingTimesheet(true);
+        setError(null);
+        
+        try {
+            // First check if we have a valid timesheet
+            let timesheetDoc;
+            
+            if (useExistingTimesheet && formData.parent) {
+                timesheetDoc = formData.parent;
+            } else {
+                // Create new timesheet first
+                await createNewTimesheetWithEntry();
+                // Get the newest timesheet created
+                const timesheets = await frappe.db.get_list('Timesheet', {
+                    filters: {
+                        status: 'Draft',
+                        owner: frappe.session.user
+                    },
+                    fields: ['name'],
+                    order_by: 'creation desc',
+                    limit: 1
+                });
+                
+                if (timesheets && timesheets.length > 0) {
+                    timesheetDoc = timesheets[0].name;
+                } else {
+                    throw new Error("Could not find the created timesheet");
+                }
+            }
+            
+            // Submit the timesheet
+            await frappe.call({
+                method: 'frappe.client.submit',
+                args: {
+                    doc: {
+                        doctype: 'Timesheet',
+                        name: timesheetDoc
+                    }
+                }
+            });
+            
+            // Get employee data for current user
+            const employeeData = await frappe.db.get_list('Employee', { 
+                filters: { user_id: frappe.session.user },
+                fields: ['name']
+            });
+            
+            if (!employeeData || employeeData.length === 0) {
+                throw new Error("Could not find an employee record for the current user");
+            }
+            
+            // Update the task as completed
+            await frappe.db.set_value('Task', task.name, {
+                status: 'Completed',
+                completed_by: employeeData[0].name,
+                completed_on: frappe.datetime.now_datetime()
+            });
+            
+            frappe.show_alert({
+                message: 'Timesheet submitted and task completed successfully',
+                indicator: 'green'
+            });
+            
+            onClose(); // Close the form on success
+        } catch (err) {
+            setError(err.message || 'Failed to submit timesheet and complete task');
+        } finally {
+            setIsSubmittingTimesheet(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -95,7 +194,8 @@ export default function TimesheetForm({ task, onClose }) {
                     description: formData.description,
                     is_billable: formData.is_billable,
                     task: formData.task,
-                    project: selectedProject?.name
+                    parent_project: selectedProject?.name,
+                    parent: selectedProject?.name
                 };
                 await createTimesheetEntry(timesheetDetail);
             } else {
@@ -135,7 +235,7 @@ export default function TimesheetForm({ task, onClose }) {
             description: formData.description,
             is_billable: formData.is_billable,
             task: formData.task,
-            project: selectedProject?.name,
+            parent_project: selectedProject?.name,
             parent: formData.parent,
         };
 
@@ -182,6 +282,18 @@ export default function TimesheetForm({ task, onClose }) {
                     {error}
                 </div>
             )}
+            
+            {/* Task Management Buttons */}
+            <div className="task-management-buttons">
+                <button 
+                    type="button" 
+                    className="task-btn submit-timesheet-btn"
+                    onClick={submitTimesheetAndCompleteTask}
+                    disabled={isSubmittingTimesheet}
+                >
+                    {isSubmittingTimesheet ? 'Processing...' : 'Submit & Complete Task'}
+                </button>
+            </div>
             
             <form onSubmit={handleSubmit}>
                 <div className="timesheet-option">
@@ -468,6 +580,91 @@ export default function TimesheetForm({ task, onClose }) {
                 }
                 .submit-btn:hover:not(:disabled) {
                     background-color: #3182ce;
+                }
+                
+                /* New styles for task management buttons */
+                .task-management-buttons {
+                    display: flex;
+                    gap: 0.5rem;
+                    margin-bottom: 1.25rem;
+                    flex-wrap: wrap;
+                }
+                
+                .task-btn {
+                    padding: 0.5rem 0.75rem;
+                    font-size: 0.8125rem;
+                    border-radius: 0.375rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    flex: 1;
+                    min-width: 120px;
+                    text-align: center;
+                }
+                
+                .assign-btn {
+                    background-color: #e5f2ff;
+                    border: 1px solid #90c8f9;
+                    color: #1a73e8;
+                }
+                
+                .assign-btn:hover:not(:disabled) {
+                    background-color: #d0e7ff;
+                }
+                
+                .status-btn {
+                    background-color: #f0f5ff;
+                    border: 1px solid #c7d9f9;
+                    color: #3b5bdb;
+                }
+                
+                .status-btn:hover:not(:disabled) {
+                    background-color: #e5ecff;
+                }
+                
+                .submit-timesheet-btn {
+                    background-color: #edf9e6;
+                    border: 1px solid #b9e3a5;
+                    color: #2e7d32;
+                }
+                
+                .submit-timesheet-btn:hover:not(:disabled) {
+                    background-color: #dff3d5;
+                }
+                
+                .status-change-container {
+                    position: relative;
+                    flex: 1;
+                    min-width: 120px;
+                }
+                
+                .status-dropdown {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background-color: white;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 0.375rem;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    z-index: 10;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    margin-top: 0.25rem;
+                }
+                
+                .status-option {
+                    padding: 0.5rem 0.75rem;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                }
+                
+                .status-option:hover {
+                    background-color: #f3f4f6;
+                }
+                
+                .status-option.selected {
+                    background-color: #e5e7eb;
+                    font-weight: 500;
                 }
             `}</style>
         </div>

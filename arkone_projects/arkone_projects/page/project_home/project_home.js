@@ -1,7 +1,7 @@
 frappe.pages["project_home"].on_page_load = function (wrapper) {
 	frappe.ui.make_app_page({
 		parent: wrapper,
-		title: __("project_home"),
+		title: __("Project Home - Timesheet Quick Entry"),
 		single_column: true,
 	});
 };

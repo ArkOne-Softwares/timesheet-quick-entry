@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProjectContext } from '../store/ProjectContext';
 import AddTaskForm from './AddTaskForm';
 import TimesheetForm from './TimesheetForm';
@@ -10,11 +10,33 @@ export default function Tasks() {
         tasksLoading, 
         tasksError, 
         selectedTask,
-        setSelectedTask
+        setSelectedTask,
+        assignTaskToSelf,
+        updateTaskStatus,
+        getTaskStatusOptions
     } = useProjectContext();
     
     const [showAddTaskForm, setShowAddTaskForm] = useState(false);
     const [showTimesheetForm, setShowTimesheetForm] = useState(false);
+    const [taskStatusOptions, setTaskStatusOptions] = useState([]);
+    const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+    const [isAssigning, setIsAssigning] = useState(false);
+    const [isChangingStatus, setIsChangingStatus] = useState(false);
+    const [actionError, setActionError] = useState(null);
+
+    // Fetch task status options when component mounts
+    useEffect(() => {
+        const fetchTaskStatuses = async () => {
+            try {
+                const statuses = await getTaskStatusOptions();
+                setTaskStatusOptions(statuses);
+            } catch (err) {
+                console.error("Error fetching task statuses:", err);
+            }
+        };
+        
+        fetchTaskStatuses();
+    }, []);
 
     if (!selectedProject) {
         return (
@@ -29,6 +51,8 @@ export default function Tasks() {
     const handleTaskClick = (task) => {
         setSelectedTask(task === selectedTask ? null : task);
         setShowTimesheetForm(false);
+        setShowStatusDropdown(false);
+        setActionError(null);
     };
 
     const toggleAddTaskForm = () => {
@@ -40,6 +64,49 @@ export default function Tasks() {
         // Prevent event from bubbling up to parent elements
         e.stopPropagation();
         setShowTimesheetForm(true);
+        setShowStatusDropdown(false);
+    };
+    
+    const handleAssignToSelf = async (e) => {
+        e.stopPropagation();
+        setIsAssigning(true);
+        setActionError(null);
+        
+        try {
+            await assignTaskToSelf(selectedTask.name);
+            frappe.show_alert({
+                message: 'Task assigned to you successfully',
+                indicator: 'green'
+            });
+        } catch (err) {
+            setActionError("Failed to assign task: " + (err.message || "Unknown error"));
+        } finally {
+            setIsAssigning(false);
+        }
+    };
+    
+    const toggleStatusDropdown = (e) => {
+        e.stopPropagation();
+        setShowStatusDropdown(!showStatusDropdown);
+    };
+    
+    const handleStatusChange = async (status, e) => {
+        e.stopPropagation();
+        setIsChangingStatus(true);
+        setActionError(null);
+        setShowStatusDropdown(false);
+        
+        try {
+            await updateTaskStatus(selectedTask.name, status);
+            frappe.show_alert({
+                message: `Task status updated to ${status}`,
+                indicator: 'green'
+            });
+        } catch (err) {
+            setActionError("Failed to update status: " + (err.message || "Unknown error"));
+        } finally {
+            setIsChangingStatus(false);
+        }
     };
 
     return (
@@ -63,6 +130,7 @@ export default function Tasks() {
 
             {tasksLoading && <p className="loading">Loading tasks...</p>}
             {tasksError && <p className="error">Error: {tasksError.message}</p>}
+            {actionError && <p className="error">{actionError}</p>}
 
             {!tasksLoading && tasks.length === 0 && (
                 <div className="empty-state">
@@ -102,6 +170,38 @@ export default function Tasks() {
                                 <button className="timesheet-btn" onClick={handleAddTimesheet}>
                                     Add Timesheet Entry
                                 </button>
+                                
+                                <button 
+                                    className="assign-btn" 
+                                    onClick={handleAssignToSelf}
+                                    disabled={isAssigning}
+                                >
+                                    {isAssigning ? 'Assigning...' : 'Assign to Me'}
+                                </button>
+                                
+                                <div className="status-dropdown-container">
+                                    <button 
+                                        className="status-btn" 
+                                        onClick={toggleStatusDropdown}
+                                        disabled={isChangingStatus}
+                                    >
+                                        {isChangingStatus ? 'Updating...' : 'Change Status'}
+                                    </button>
+                                    
+                                    {showStatusDropdown && (
+                                        <div className="status-dropdown">
+                                            {taskStatusOptions.map(status => (
+                                                <div 
+                                                    key={status} 
+                                                    className={`status-option ${task.status === status ? 'selected' : ''}`}
+                                                    onClick={(e) => handleStatusChange(status, e)}
+                                                >
+                                                    {status}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -211,6 +311,10 @@ export default function Tasks() {
                     background-color: #f3e8ff;
                     color: #6b21a8;
                 }
+                .status-completed {
+                    background-color: #dcfce7;
+                    color: #15803d;
+                }
                 .task-details {
                     display: flex;
                     flex-wrap: wrap;
@@ -242,21 +346,74 @@ export default function Tasks() {
                     font-size: 0.75rem;
                 }
                 .task-actions {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 0.5rem;
                     margin-top: 1rem;
                     padding-top: 1rem;
                     border-top: 1px solid #e5e7eb;
                 }
-                .timesheet-btn {
-                    background-color: #f3f4f6;
-                    border: 1px solid #d1d5db;
-                    color: #374151;
+                .timesheet-btn, .assign-btn, .status-btn {
                     padding: 0.375rem 0.75rem;
                     border-radius: 0.375rem;
                     font-size: 0.875rem;
                     cursor: pointer;
                 }
-                .timesheet-btn:hover {
+                .timesheet-btn {
+                    background-color: #f3f4f6;
+                    border: 1px solid #d1d5db;
+                    color: #374151;
+                }
+                .timesheet-btn:hover:not(:disabled) {
                     background-color: #e5e7eb;
+                }
+                .assign-btn {
+                    background-color: #e5f2ff;
+                    border: 1px solid #90c8f9;
+                    color: #1a73e8;
+                }
+                .assign-btn:hover:not(:disabled) {
+                    background-color: #d0e7ff;
+                }
+                .status-btn {
+                    background-color: #f0f5ff;
+                    border: 1px solid #c7d9f9;
+                    color: #3b5bdb;
+                }
+                .status-btn:hover:not(:disabled) {
+                    background-color: #e5ecff;
+                }
+                .status-dropdown-container {
+                    position: relative;
+                    display: inline-block;
+                }
+                .status-dropdown {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    margin-top: 0.25rem;
+                    background-color: white;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 0.375rem;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    z-index: 10;
+                    min-width: 150px;
+                }
+                .status-option {
+                    padding: 0.5rem 0.75rem;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                }
+                .status-option:hover {
+                    background-color: #f3f4f6;
+                }
+                .status-option.selected {
+                    background-color: #e5e7eb;
+                    font-weight: 500;
+                }
+                button:disabled {
+                    opacity: 0.7;
+                    cursor: not-allowed;
                 }
             `}</style>
         </div>
