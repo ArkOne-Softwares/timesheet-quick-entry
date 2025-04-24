@@ -1,6 +1,6 @@
 import frappe
-from arkone_projects.setup.utils import update_workspace
-from arkone_projects.setup.utils import create_shortcut
+from arkone_projects.setup.workspace_utils import update_workspace
+from arkone_projects.setup.workspace_utils import create_shortcut
 
 def after_install():
     """
