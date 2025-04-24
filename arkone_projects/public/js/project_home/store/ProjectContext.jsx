@@ -70,6 +70,46 @@ export function ProjectProvider({ children }) {
     });
   };
 
+  // Function to fetch all tasks regardless of project
+  const fetchAllTasks = () => {
+    setTasksLoading(true);
+    frappe.db.get_list('Task', {
+        filters: {
+            status: ['not in', ['Cancelled']]
+        },
+        fields: [
+          'name', 
+          'subject', 
+          'status', 
+          'priority', 
+          'exp_start_date', 
+          'exp_end_date',
+          'progress',
+          'project',
+          '_assign'
+        ],
+        limit: 100,
+    })
+    .then((data) => {
+        // Process the _assign field to get assigned users
+        const processedTasks = data.map(task => {
+            const assignedUsers = task._assign ? JSON.parse(task._assign) : [];
+            return {
+                ...task,
+                assignedUsers
+            };
+        });
+        setTasks(processedTasks);
+    })
+    .catch((error) => {
+        console.error('Error fetching all tasks:', error);
+        setTasksError(error);
+    })
+    .finally(() => {
+        setTasksLoading(false);
+    });
+  };
+
   // Function to fetch tasks for a project
   const fetchTasksForProject = (projectName) => {
     setTasksLoading(true);
@@ -286,6 +326,7 @@ export function ProjectProvider({ children }) {
     setError,
     setSelectedProject,
     fetchTasksForProject,
+    fetchAllTasks,
     createTask,
     setSelectedTask,
     createTimesheetEntry,

@@ -2,8 +2,34 @@ import * as React from "react";
 import Projects from "./components/Projects";
 import Tasks from "./components/Tasks";
 import { ProjectProvider } from "./store/ProjectContext";
+import Alltasks from "./components/Alltasks";
 
-export function App() {
+export function App({ showTasks = false }) {
+
+  if(showTasks) {
+    return (
+      <ProjectProvider>
+        <div className="app-container all-tasks-container">
+          <div className="main-content full-width">
+            <Alltasks />
+          </div>
+        </div>
+        <style jsx>{`
+          .app-container {
+            height: calc(100vh - 60px);
+            width: 100%;
+            background-color: #f9fafb;
+          }
+          .full-width {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+          }
+        `}</style>
+      </ProjectProvider>
+    );
+  }
+
   return (
     <ProjectProvider>
       <div className="app-container">
