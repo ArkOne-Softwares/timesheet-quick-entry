@@ -87,7 +87,7 @@ required_apps = ["frappe", "erpnext"]
 
 # before_install = "arkone_projects.install.before_install"
 after_install = "arkone_projects.setup.setup.after_install"
-after_migrate = "arkone_projects.setup.setup.after_migrate"
+# after_migrate = "arkone_projects.setup.setup.after_migrate"
 
 # Uninstallation
 # ------------
