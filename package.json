@@ -5,11 +5,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["erp", "project-management", "mobile-first", "react", "erpnext"],
+  "author": "ArkOne Softwares",
+  "license": "MIT",
   "dependencies": {
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-beautiful-dnd": "^13.1.1"
   }
 }

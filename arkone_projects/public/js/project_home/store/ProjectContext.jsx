@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { createContext, useReducer, useContext } from 'react';
 import { projectReducer, initialState, ACTIONS } from './projectReducer';
+import apiService from '../services/api';
 
 // Create context
 const ProjectContext = createContext();
@@ -49,122 +50,66 @@ export function ProjectProvider({ children }) {
   };
 
   // Function to fetch projects
-  const fetchProjects = () => {
+  const fetchProjects = async () => {
+    console.log('Fetching projects...'); // Debug logging
     setLoading(true);
-    frappe.db.get_list('Project', {
-        filters: {
-            status: 'Open'
-        },
-        fields: ['name', 'project_name', 'status', 'customer', 'project_type'],
-        limit: 50,
-    })
-    .then((data) => {
-        setProjects(data);
-    })
-    .catch((error) => {
-        console.error('Error fetching projects:', error);
-        setError(error);
-    })
-    .finally(() => {
-        setLoading(false);
-    });
+    try {
+      const projects = await apiService.getProjects();
+      console.log('Projects fetched:', projects); // Debug logging
+      // Ensure projects is always an array
+      setProjects(Array.isArray(projects) ? projects : []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      setError(error);
+      setProjects([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Function to fetch all tasks regardless of project
-  const fetchAllTasks = () => {
+  const fetchAllTasks = async () => {
     setTasksLoading(true);
-    frappe.db.get_list('Task', {
-        filters: {
-            status: ['not in', ['Cancelled']]
-        },
-        fields: [
-          'name', 
-          'subject', 
-          'status', 
-          'priority', 
-          'exp_start_date', 
-          'exp_end_date',
-          'progress',
-          'project',
-          '_assign'
-        ],
-        limit: 100,
-    })
-    .then((data) => {
-        // Process the _assign field to get assigned users
-        const processedTasks = data.map(task => {
-            const assignedUsers = task._assign ? JSON.parse(task._assign) : [];
-            return {
-                ...task,
-                assignedUsers
-            };
-        });
-        setTasks(processedTasks);
-    })
-    .catch((error) => {
-        console.error('Error fetching all tasks:', error);
-        setTasksError(error);
-    })
-    .finally(() => {
-        setTasksLoading(false);
-    });
+    try {
+      const tasks = await apiService.getTasks();
+      setTasks(Array.isArray(tasks) ? tasks : []);
+    } catch (error) {
+      console.error('Error fetching all tasks:', error);
+      setTasksError(error);
+      setTasks([]); // Set empty array on error
+    } finally {
+      setTasksLoading(false);
+    }
   };
 
   // Function to fetch tasks for a project
-  const fetchTasksForProject = (projectName) => {
+  const fetchTasksForProject = async (projectName) => {
     setTasksLoading(true);
-    frappe.db.get_list('Task', {
-        filters: {
-            project: projectName,
-            status: ['not in', ['Cancelled', 'Completed']]
-        },
-        fields: [
-          'name', 
-          'subject', 
-          'status', 
-          'priority', 
-          'exp_start_date', 
-          'exp_end_date',
-          'progress'
-        ],
-        limit: 100,
-    })
-    .then((data) => {
-        setTasks(data);
-    })
-    .catch((error) => {
-        console.error(`Error fetching tasks for project ${projectName}:`, error);
-        setTasksError(error);
-    })
-    .finally(() => {
-        setTasksLoading(false);
-    });
+    try {
+      const tasks = await apiService.getTasks(projectName);
+      setTasks(Array.isArray(tasks) ? tasks : []);
+    } catch (error) {
+      console.error(`Error fetching tasks for project ${projectName}:`, error);
+      setTasksError(error);
+      setTasks([]); // Set empty array on error
+    } finally {
+      setTasksLoading(false);
+    }
   };
 
   // Function to create a new task
-  const createTask = (taskData) => {
-    return new Promise((resolve, reject) => {
-      frappe.call({
-        method: 'frappe.client.insert',
-        args: {
-          doc: {
-            doctype: 'Task',
-            ...taskData
-          }
-        },
-        callback: (response) => {
-          if (response.message) {
-            // Re-fetch tasks to update the list
-            fetchTasksForProject(state.selectedProject.name);
-            resolve(response.message);
-          }
-        },
-        error: (err) => {
-          console.error('Error creating task:', err);
-          reject(err);
-        }
-      });
-    });
+  const createTask = async (taskData) => {
+    try {
+      const newTask = await apiService.createTask(taskData);
+      // Re-fetch tasks to update the list
+      if (state.selectedProject) {
+        await fetchTasksForProject(state.selectedProject.name);
+      }
+      return newTask;
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
   };
 
   // Function to create a timesheet entry for a task
@@ -221,26 +166,13 @@ export function ProjectProvider({ children }) {
   // Function to update task status
   const updateTaskStatus = async (taskId, status) => {
     try {
-      await frappe.db.set_value('Task', taskId, { status });
-      
-      // If marking as completed, set the completed_by and completed_on fields
-      if (status === 'Completed') {
-        const employeeData = await frappe.db.get_list('Employee', { 
-          filters: { user_id: frappe.session.user },
-          fields: ['name']
-        });
-        
-        if (employeeData && employeeData.length > 0) {
-          await frappe.db.set_value('Task', taskId, {
-            completed_by: employeeData[0].name,
-            completed_on: frappe.datetime.now_datetime()
-          });
-        }
-      }
+      await apiService.updateTaskStatus(taskId, status);
       
       // Refresh the task list
       if (state.selectedProject) {
-        fetchTasksForProject(state.selectedProject.name);
+        await fetchTasksForProject(state.selectedProject.name);
+      } else {
+        await fetchAllTasks();
       }
       
       return true;

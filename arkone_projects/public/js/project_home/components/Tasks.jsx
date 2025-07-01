@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useProjectContext } from '../store/ProjectContext';
 import AddTaskForm from './AddTaskForm';
 import TimesheetForm from './TimesheetForm';
+import Modal from './Modal';
 
-export default function Tasks() {
+export default function Tasks({ tasks: tasksProp }) {
     const { 
         selectedProject, 
-        tasks, 
+        tasks: contextTasks, 
         tasksLoading, 
         tasksError, 
         selectedTask,
@@ -15,6 +16,9 @@ export default function Tasks() {
         updateTaskStatus,
         getTaskStatusOptions
     } = useProjectContext();
+    
+    // Use prop tasks if provided, otherwise use context tasks
+    const tasks = tasksProp || contextTasks || [];
     
     const [showAddTaskForm, setShowAddTaskForm] = useState(false);
     const [showTimesheetForm, setShowTimesheetForm] = useState(false);
@@ -53,11 +57,6 @@ export default function Tasks() {
         setShowTimesheetForm(false);
         setShowStatusDropdown(false);
         setActionError(null);
-    };
-
-    const toggleAddTaskForm = () => {
-        setShowAddTaskForm(!showAddTaskForm);
-        setShowTimesheetForm(false);
     };
 
     const handleAddTimesheet = (e) => {
@@ -115,31 +114,38 @@ export default function Tasks() {
                 <h2 className="project-title">{selectedProject.project_name || selectedProject.name}</h2>
                 <button 
                     className="add-task-btn" 
-                    onClick={toggleAddTaskForm}
+                    onClick={() => setShowAddTaskForm(true)}
                 >
-                    {showAddTaskForm ? 'Cancel' : 'Add Task'}
+                    Add Task
                 </button>
             </div>
 
+            {/* Add Task Modal */}
             {showAddTaskForm && (
-                <AddTaskForm 
-                    projectName={selectedProject.name}
-                    onCancel={() => setShowAddTaskForm(false)} 
-                />
+                <Modal
+                    title="Create New Task"
+                    onClose={() => setShowAddTaskForm(false)}
+                    isOpen={showAddTaskForm}
+                >
+                    <AddTaskForm 
+                        projectName={selectedProject.name}
+                        onCancel={() => setShowAddTaskForm(false)} 
+                    />
+                </Modal>
             )}
 
             {tasksLoading && <p className="loading">Loading tasks...</p>}
             {tasksError && <p className="error">Error: {tasksError.message}</p>}
             {actionError && <p className="error">{actionError}</p>}
 
-            {!tasksLoading && tasks.length === 0 && (
+            {!tasksLoading && Array.isArray(tasks) && tasks.length === 0 && (
                 <div className="empty-state">
                     <p>No tasks found for this project.</p>
                 </div>
             )}
 
             <div className="task-list">
-                {tasks.map(task => (
+                {Array.isArray(tasks) && tasks.map(task => (
                     <div 
                         key={task.name}
                         className={`task-item ${selectedTask && selectedTask.name === task.name ? 'selected' : ''}`}

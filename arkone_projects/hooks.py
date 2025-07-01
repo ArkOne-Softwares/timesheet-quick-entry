@@ -1,5 +1,5 @@
 app_name = "arkone_projects"
-app_title = "Arkone Projects"
+app_title = "Focal Board"
 app_publisher = "ArkOne Softwares"
 app_description = "Simple project management that also add task and timesheet easily"
 app_email = "arkonesoft@gmail.com"
@@ -11,21 +11,21 @@ app_license = "mit"
 required_apps = ["frappe", "erpnext"]
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "arkone_projects",
-# 		"logo": "/assets/arkone_projects/logo.png",
-# 		"title": "Arkone Projects",
-# 		"route": "/arkone_projects",
-# 		"has_permission": "arkone_projects.api.permission.has_app_permission"
-# 	}
+# app_include = [
+#     {
+#         "name": "arkone_projects",
+#         "logo": "/assets/arkone_projects/logo.png",
+#         "title": "Arkone Projects",
+#         "route": "/project_home",
+#         "has_permission": "arkone_projects.api.permission.has_app_permission"
+#     }
 # ]
 
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/arkone_projects/css/arkone_projects.css"
+app_include_css = "/assets/arkone_projects/css/arkone_projects.css"
 # app_include_js = "/assets/arkone_projects/js/arkone_projects.js"
 
 # include js, css files in header of web template

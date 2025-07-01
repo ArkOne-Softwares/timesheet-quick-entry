@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useProjectContext } from '../store/ProjectContext';
 import TimesheetForm from './TimesheetForm';
 
-export default function Alltasks() {
+export default function Alltasks({ tasks: tasksProp }) {
     const { 
-        tasks, 
+        tasks: contextTasks, 
         tasksLoading, 
         tasksError, 
         fetchAllTasks,
@@ -14,6 +14,9 @@ export default function Alltasks() {
         updateTaskStatus,
         getTaskStatusOptions
     } = useProjectContext();
+    
+    // Use prop tasks if provided, otherwise use context tasks
+    const tasks = tasksProp || contextTasks || [];
     
     const [showTimesheetForm, setShowTimesheetForm] = useState(false);
     const [taskStatusOptions, setTaskStatusOptions] = useState([]);
@@ -110,13 +113,13 @@ export default function Alltasks() {
                 });
                 
                 // Update tasks with resolved names
-                const updatedTasks = tasks.map(task => {
+                const updatedTasks = Array.isArray(tasks) ? tasks.map(task => {
                     if (task.assignedUsers && task.assignedUsers.length > 0) {
                         const assignedNames = task.assignedUsers.map(email => userNameMap[email] || email);
                         return { ...task, assignedNames };
                     }
                     return task;
-                });
+                }) : [];
                 
                 // Update tasks state
                 setSelectedTask(null); // Reset selected task
@@ -214,7 +217,7 @@ export default function Alltasks() {
             )}
 
             <div className="task-list">
-                {tasks.map(task => (
+                {Array.isArray(tasks) && tasks.map(task => (
                     <div 
                         key={task.name}
                         className={`task-item ${selectedTask && selectedTask.name === task.name ? 'selected' : ''}`}

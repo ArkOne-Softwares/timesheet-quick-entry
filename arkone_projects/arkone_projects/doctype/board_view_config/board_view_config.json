@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:view_name",
+ "creation": "2025-07-01 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "view_name",
+  "user",
+  "reference_doctype",
+  "filters",
+  "column_config",
+  "sort_order",
+  "is_default"
+ ],
+ "fields": [
+  {
+   "fieldname": "view_name",
+   "fieldtype": "Data",
+   "label": "View Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "__user",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference DocType",
+   "options": "Task\nProject",
+   "reqd": 1
+  },
+  {
+   "fieldname": "filters",
+   "fieldtype": "Long Text",
+   "label": "Filters (JSON)"
+  },
+  {
+   "fieldname": "column_config",
+   "fieldtype": "Long Text",
+   "label": "Column Configuration (JSON)"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Long Text",
+   "label": "Sort Order (JSON)"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Is Default View"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Arkone Projects",
+ "name": "Board View Config",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Project Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Project User",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

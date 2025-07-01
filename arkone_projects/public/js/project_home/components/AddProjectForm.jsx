@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { useProjectContext } from '../store/ProjectContext';
 
-export default function AddTaskForm({ projectName, onCancel, initialStatus = 'Open' }) {
-    const { fetchTasksForProject } = useProjectContext();
+export default function AddProjectForm({ onCancel, onSuccess }) {
     const [formData, setFormData] = useState({
-        subject: '',
-        project: projectName,
-        description: '',
-        status: initialStatus,
+        project_name: '',
+        status: 'Open',
         priority: 'Medium',
-        exp_start_date: '',
-        exp_end_date: ''
+        expected_start_date: '',
+        expected_end_date: '',
+        project_type: 'Internal',
+        customer: '',
+        department: '',
+        description: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -24,14 +24,14 @@ export default function AddTaskForm({ projectName, onCancel, initialStatus = 'Op
     };
 
     const validateForm = () => {
-        if (!formData.subject.trim()) {
-            setError('Task subject is required');
+        if (!formData.project_name.trim()) {
+            setError('Project name is required');
             return false;
         }
         
-        if (formData.exp_start_date && formData.exp_end_date) {
-            const startDate = new Date(formData.exp_start_date);
-            const endDate = new Date(formData.exp_end_date);
+        if (formData.expected_start_date && formData.expected_end_date) {
+            const startDate = new Date(formData.expected_start_date);
+            const endDate = new Date(formData.expected_end_date);
             if (startDate >= endDate) {
                 setError('End date must be after start date');
                 return false;
@@ -53,27 +53,24 @@ export default function AddTaskForm({ projectName, onCancel, initialStatus = 'Op
         setError(null);
 
         try {
-            // Use Frappe's native API to create task
+            // Use Frappe's native API to create project
             const response = await frappe.call({
                 method: 'frappe.client.insert',
                 args: {
                     doc: {
-                        doctype: 'Task',
+                        doctype: 'Project',
                         ...formData
                     }
                 }
             });
 
             if (response.message) {
-                // Refresh tasks for current project
-                if (projectName) {
-                    fetchTasksForProject(projectName);
-                }
+                onSuccess && onSuccess(response.message);
                 onCancel(); // Close the form on success
             }
         } catch (err) {
-            console.error('Error creating task:', err);
-            setError(err.message || 'Failed to create task');
+            console.error('Error creating project:', err);
+            setError(err.message || 'Failed to create project');
         } finally {
             setIsSubmitting(false);
         }
@@ -88,16 +85,17 @@ export default function AddTaskForm({ projectName, onCancel, initialStatus = 'Op
             )}
             
             <form onSubmit={handleSubmit}>
+                {/* Basic Information */}
                 <div className="form-group">
-                    <label htmlFor="subject">Task Subject *</label>
+                    <label htmlFor="project_name">Project Name *</label>
                     <input
                         type="text"
-                        id="subject"
-                        name="subject"
-                        value={formData.subject}
+                        id="project_name"
+                        name="project_name"
+                        value={formData.project_name}
                         onChange={handleChange}
                         required
-                        placeholder="Enter a clear and descriptive task name"
+                        placeholder="Enter a descriptive project name"
                     />
                 </div>
                 
@@ -109,10 +107,11 @@ export default function AddTaskForm({ projectName, onCancel, initialStatus = 'Op
                         value={formData.description}
                         onChange={handleChange}
                         rows="3"
-                        placeholder="Describe what needs to be done, requirements, or acceptance criteria"
+                        placeholder="Describe the project goals and scope"
                     ></textarea>
                 </div>
                 
+                {/* Project Settings */}
                 <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="status">Status</label>
@@ -123,9 +122,6 @@ export default function AddTaskForm({ projectName, onCancel, initialStatus = 'Op
                             onChange={handleChange}
                         >
                             <option value="Open">Open</option>
-                            <option value="Working">Working</option>
-                            <option value="Pending Review">Pending Review</option>
-                            <option value="Overdue">Overdue</option>
                             <option value="Completed">Completed</option>
                             <option value="Cancelled">Cancelled</option>
                         </select>
@@ -146,26 +142,69 @@ export default function AddTaskForm({ projectName, onCancel, initialStatus = 'Op
                         </select>
                     </div>
                 </div>
-                
+
                 <div className="form-row">
                     <div className="form-group">
-                        <label htmlFor="exp_start_date">Expected Start Date</label>
+                        <label htmlFor="project_type">Project Type</label>
+                        <select
+                            id="project_type"
+                            name="project_type"
+                            value={formData.project_type}
+                            onChange={handleChange}
+                        >
+                            <option value="Internal">Internal</option>
+                            <option value="External">External</option>
+                        </select>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label htmlFor="department">Department</label>
+                        <input
+                            type="text"
+                            id="department"
+                            name="department"
+                            value={formData.department}
+                            onChange={handleChange}
+                            placeholder="e.g., Engineering, Marketing"
+                        />
+                    </div>
+                </div>
+                
+                {/* Customer Information */}
+                {formData.project_type === 'External' && (
+                    <div className="form-group">
+                        <label htmlFor="customer">Customer</label>
+                        <input
+                            type="text"
+                            id="customer"
+                            name="customer"
+                            value={formData.customer}
+                            onChange={handleChange}
+                            placeholder="Customer or client name"
+                        />
+                    </div>
+                )}
+                
+                {/* Timeline */}
+                <div className="form-row">
+                    <div className="form-group">
+                        <label htmlFor="expected_start_date">Expected Start Date</label>
                         <input
                             type="date"
-                            id="exp_start_date"
-                            name="exp_start_date"
-                            value={formData.exp_start_date}
+                            id="expected_start_date"
+                            name="expected_start_date"
+                            value={formData.expected_start_date}
                             onChange={handleChange}
                         />
                     </div>
                     
                     <div className="form-group">
-                        <label htmlFor="exp_end_date">Expected End Date</label>
+                        <label htmlFor="expected_end_date">Expected End Date</label>
                         <input
                             type="date"
-                            id="exp_end_date"
-                            name="exp_end_date"
-                            value={formData.exp_end_date}
+                            id="expected_end_date"
+                            name="expected_end_date"
+                            value={formData.expected_end_date}
                             onChange={handleChange}
                         />
                     </div>
@@ -185,7 +224,7 @@ export default function AddTaskForm({ projectName, onCancel, initialStatus = 'Op
                         className="submit-btn"
                         disabled={isSubmitting}
                     >
-                        {isSubmitting ? 'Creating Task...' : 'Create Task'}
+                        {isSubmitting ? 'Creating Project...' : 'Create Project'}
                     </button>
                 </div>
             </form>
