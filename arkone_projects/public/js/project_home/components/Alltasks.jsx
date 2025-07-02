@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { FaEdit } from 'react-icons/fa';
 import { useProjectContext } from '../store/ProjectContext';
+import EditTaskForm from './EditTaskForm';
 import TimesheetForm from './TimesheetForm';
+import Modal from './Modal';
+import { hasTaskEditPermission } from '../permissions';
 
 export default function Alltasks({ tasks: tasksProp }) {
     const { 
@@ -19,12 +23,15 @@ export default function Alltasks({ tasks: tasksProp }) {
     const tasks = tasksProp || contextTasks || [];
     
     const [showTimesheetForm, setShowTimesheetForm] = useState(false);
+    const [showEditTaskForm, setShowEditTaskForm] = useState(false);
+    const [editingTask, setEditingTask] = useState(null);
     const [taskStatusOptions, setTaskStatusOptions] = useState([]);
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     const [isAssigning, setIsAssigning] = useState(false);
     const [isChangingStatus, setIsChangingStatus] = useState(false);
     const [actionError, setActionError] = useState(null);
     const [projectNames, setProjectNames] = useState({});
+    const [taskPermissions, setTaskPermissions] = useState({});
 
     // Fetch all tasks and task status options when component mounts
     useEffect(() => {
@@ -73,6 +80,26 @@ export default function Alltasks({ tasks: tasksProp }) {
         };
         
         fetchProjectNames();
+    }, [tasks]);
+
+    // Check permissions for each task
+    useEffect(() => {
+        const checkPermissions = async () => {
+            const permissions = {};
+            for (const task of tasks) {
+                try {
+                    permissions[task.name] = await hasTaskEditPermission(task.name);
+                } catch (error) {
+                    console.error(`Failed to check permissions for task ${task.name}:`, error);
+                    permissions[task.name] = false;
+                }
+            }
+            setTaskPermissions(permissions);
+        };
+
+        if (tasks.length > 0) {
+            checkPermissions();
+        }
     }, [tasks]);
 
     // Resolve assigned user names
@@ -144,6 +171,20 @@ export default function Alltasks({ tasks: tasksProp }) {
         setShowTimesheetForm(true);
         setShowStatusDropdown(false);
     };
+
+    const handleEditTask = (task, e) => {
+        e.stopPropagation();
+        setEditingTask(task);
+        setShowEditTaskForm(true);
+        setShowStatusDropdown(false);
+    };
+
+    const handleEditTaskSuccess = () => {
+        // Refresh all tasks
+        fetchAllTasks();
+        setShowEditTaskForm(false);
+        setEditingTask(null);
+    };
     
     const handleAssignToSelf = async (e) => {
         e.stopPropagation();
@@ -210,6 +251,27 @@ export default function Alltasks({ tasks: tasksProp }) {
             {tasksError && <p className="error">Error: {tasksError.message}</p>}
             {actionError && <p className="error">{actionError}</p>}
 
+            {/* Edit Task Modal */}
+            {showEditTaskForm && editingTask && (
+                <Modal
+                    title={`Edit Task: ${editingTask.subject}`}
+                    onClose={() => {
+                        setShowEditTaskForm(false);
+                        setEditingTask(null);
+                    }}
+                    isOpen={showEditTaskForm}
+                >
+                    <EditTaskForm 
+                        task={editingTask}
+                        onCancel={() => {
+                            setShowEditTaskForm(false);
+                            setEditingTask(null);
+                        }}
+                        onSuccess={handleEditTaskSuccess}
+                    />
+                </Modal>
+            )}
+
             {!tasksLoading && tasks.length === 0 && (
                 <div className="empty-state">
                     <p>No tasks found.</p>
@@ -225,9 +287,20 @@ export default function Alltasks({ tasks: tasksProp }) {
                     >
                         <div className="task-header">
                             <h3>{task.subject}</h3>
-                            <span className={`task-status status-${task.status?.toLowerCase()}`}>
-                                {task.status}
-                            </span>
+                            <div className="task-header-actions">
+                                {taskPermissions[task.name] && (
+                                    <button
+                                        className="task-edit-btn"
+                                        onClick={(e) => handleEditTask(task, e)}
+                                        title="Edit Task"
+                                    >
+                                        <FaEdit />
+                                    </button>
+                                )}
+                                <span className={`task-status status-${task.status?.toLowerCase()}`}>
+                                    {task.status}
+                                </span>
+                            </div>
                         </div>
                         <div className="task-details">
                             <span className="task-id">{task.name}</span>

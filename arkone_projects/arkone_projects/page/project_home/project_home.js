@@ -1,7 +1,7 @@
 frappe.pages["project_home"].on_page_load = function (wrapper) {
 	frappe.ui.make_app_page({
 		parent: wrapper,
-		title: __("Project Home - Timesheet Quick Entry"),
+		title: __("Project Home"),
 		single_column: true,
 	});
 };
@@ -20,4 +20,10 @@ function load_desk_page(wrapper) {
 			page: wrapper.page,
 		});
 	});
+
+	// Inject CSS
+	const cssLink = document.createElement("link");
+	cssLink.rel = "stylesheet";
+	cssLink.href = "/assets/arkone_projects/css/arkone_projects.css";
+	document.head.appendChild(cssLink);
 }

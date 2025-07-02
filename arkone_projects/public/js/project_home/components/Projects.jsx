@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FaPlus } from 'react-icons/fa';
 import { useProjectContext } from '../store/ProjectContext';
 import AddProjectForm from './AddProjectForm';
 import Modal from './Modal';
@@ -38,7 +39,8 @@ export default function Projects() {
                     onClick={() => setShowAddProjectForm(true)}
                     title="Add New Project"
                 >
-                    ➕ Add
+                    <FaPlus style={{ marginRight: '6px' }} />
+                    Add
                 </button>
             </div>
             

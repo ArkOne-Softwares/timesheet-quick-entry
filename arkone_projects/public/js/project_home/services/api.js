@@ -1,6 +1,7 @@
 /**
  * API Service for Arkone Projects
- * Handles all communication with ERPNext backend
+ * Simplified service for any remaining custom endpoints
+ * Most functionality now uses native Frappe APIs directly
  */
 
 const API_BASE = '/api/method/arkone_projects.arkone_projects.api';
@@ -28,7 +29,6 @@ class ApiService {
         });
         const queryString = params.toString();
         const finalUrl = queryString ? `${url}?${queryString}` : url;
-        console.log('API Request:', finalUrl); // Debug logging
         config.url = finalUrl;
       } else {
         config.body = JSON.stringify(data);
@@ -38,8 +38,6 @@ class ApiService {
       config.url = url;
     }
 
-    console.log('API Request:', config.url, config); // Debug logging
-    
     try {
       const response = await fetch(config.url, config);
       
@@ -48,7 +46,6 @@ class ApiService {
       }
       
       const result = await response.json();
-      console.log('API Response:', result); // Debug logging
       
       if (result.message && result.message.success !== undefined) {
         if (!result.message.success) {
@@ -65,58 +62,17 @@ class ApiService {
     }
   }
 
-  // Projects API
-  async getProjects(filters = null) {
+  // Test API connection - if needed for debugging
+  async testConnection() {
     try {
-      const params = {};
-      if (filters) {
-        params.filters = JSON.stringify(filters);
-      }
-      return await this.request('get_projects', params);
+      return await this.request('test_api_connection');
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error testing API connection:', error);
       throw error;
     }
   }
 
-  // Tasks API
-  async getTasks(project = null, filters = null) {
-    try {
-      const params = {};
-      if (project) params.project = project;
-      if (filters) params.filters = JSON.stringify(filters);
-      
-      return await this.request('get_tasks', params);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      throw error;
-    }
-  }
-
-  async updateTaskStatus(taskName, newStatus) {
-    try {
-      return await this.request('update_task_status', {
-        task_name: taskName,
-        new_status: newStatus
-      }, 'POST');
-    } catch (error) {
-      console.error('Error updating task status:', error);
-      throw error;
-    }
-  }
-
-  async createTask(taskData) {
-    try {
-      return await this.request('create_task', {
-        data: JSON.stringify(taskData)
-      }, 'POST');
-    } catch (error) {
-      console.error('Error creating task:', error);
-      throw error;
-    }
-  }
-
-  // Timesheet API
+  // Keep timesheet-related methods if they use custom logic
   async getTimesheetData(task = null, project = null, dateRange = null) {
     try {
       const params = {};
@@ -142,60 +98,12 @@ class ApiService {
     }
   }
 
-  // User permissions
+  // User permissions - if custom logic is needed
   async getUserPermissions() {
     try {
       return await this.request('get_user_permissions');
     } catch (error) {
       console.error('Error fetching user permissions:', error);
-      throw error;
-    }
-  }
-
-  // Board view configurations
-  async getBoardViewConfigs(doctype) {
-    try {
-      return frappe.call({
-        method: 'frappe.client.get_list',
-        args: {
-          doctype: 'Board View Config',
-          filters: {
-            user: frappe.session.user,
-            reference_doctype: doctype
-          },
-          fields: ['name', 'view_name', 'filters', 'column_config', 'sort_order', 'is_default']
-        }
-      }).then(r => r.message);
-    } catch (error) {
-      console.error('Error fetching board view configs:', error);
-      throw error;
-    }
-  }
-
-  async saveBoardViewConfig(viewData) {
-    try {
-      return frappe.call({
-        method: 'frappe.client.save',
-        args: {
-          doc: {
-            doctype: 'Board View Config',
-            ...viewData,
-            user: frappe.session.user
-          }
-        }
-      }).then(r => r.message);
-    } catch (error) {
-      console.error('Error saving board view config:', error);
-      throw error;
-    }
-  }
-
-  // Test API connection
-  async testConnection() {
-    try {
-      return await this.request('test_api_connection');
-    } catch (error) {
-      console.error('Error testing API connection:', error);
       throw error;
     }
   }

@@ -463,6 +463,51 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
+.arkone-task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.arkone-task-title-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.arkone-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arkone-app .task-edit-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arkone-app .task-edit-btn:hover {
+  opacity: 1;
+  background-color: rgba(59, 130, 246, 0.1);
+  transform: scale(1.1);
+}
+
+.arkone-task-card:hover .arkone-app .task-edit-btn {
+  opacity: 1;
+}
+
 .arkone-task-title-section {
   display: flex;
   align-items: center;
@@ -562,28 +607,28 @@
 }
 
 /* Tasks Component Styles */
-.task-content {
+.arkone-app .task-content {
   width: 100%;
   height: 100%;
   padding: 16px;
   overflow-y: auto;
 }
 
-.header {
+.arkone-app .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
 }
 
-.project-title {
+.arkone-app .project-title {
   font-size: 1.5rem;
   font-weight: 600;
   color: #1a202c;
   margin: 0;
 }
 
-.add-task-btn {
+.arkone-app .add-task-btn {
   background-color: #4299e1;
   color: white;
   border: none;
@@ -595,17 +640,17 @@
   transition: background-color 0.2s;
 }
 
-.add-task-btn:hover {
+.arkone-app .add-task-btn:hover {
   background-color: #3182ce;
 }
 
-.loading {
+.arkone-app .loading {
   color: #718096;
   font-size: 0.875rem;
   margin: 16px 0;
 }
 
-.error {
+.arkone-app .error {
   color: #e53e3e;
   font-size: 0.875rem;
   margin: 16px 0;
@@ -614,13 +659,13 @@
   border-radius: 6px;
 }
 
-.task-list {
+.arkone-app .task-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.task-item {
+.arkone-app .task-item {
   background-color: white;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -629,31 +674,38 @@
   transition: all 0.2s;
 }
 
-.task-item:hover {
+.arkone-app .task-item:hover {
   border-color: #cbd5e0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.task-item.selected {
+.arkone-app .task-item.selected {
   border-color: #4299e1;
   box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.1);
 }
 
-.task-header {
+.arkone-app .task-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
 }
 
-.task-title {
+.arkone-app .task-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arkone-app .task-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: #1a202c;
   margin: 0;
+  flex: 1;
 }
 
-.task-status {
+.arkone-app .task-status {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -661,39 +713,39 @@
   text-transform: uppercase;
 }
 
-.status-open {
+.arkone-app .status-open {
   background-color: #bee3f8;
   color: #2b6cb0;
 }
 
-.status-working {
+.arkone-app .status-working {
   background-color: #feebc8;
   color: #c05621;
 }
 
-.status-pending {
+.arkone-app .status-pending {
   background-color: #fed7d7;
   color: #c53030;
 }
 
-.status-completed {
+.arkone-app .status-completed {
   background-color: #c6f6d5;
   color: #276749;
 }
 
-.status-cancelled {
+.arkone-app .status-cancelled {
   background-color: #e2e8f0;
   color: #4a5568;
 }
 
-.task-details {
+.arkone-app .task-details {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
 }
 
-.task-id {
+.arkone-app .task-id {
   font-size: 0.875rem;
   color: #718096;
   font-family: monospace;
@@ -704,13 +756,13 @@
   color: #4a5568;
 }
 
-.progress-container {
+.arkone-app .progress-container {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.progress-bar {
+.arkone-app .progress-bar {
   flex: 1;
   height: 6px;
   background-color: #e2e8f0;
@@ -718,20 +770,20 @@
   overflow: hidden;
 }
 
-.progress-text {
+.arkone-app .progress-text {
   font-size: 0.75rem;
   color: #718096;
   font-weight: 500;
   min-width: 35px;
 }
 
-.task-actions {
+.arkone-app .task-actions {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.task-actions button {
+.arkone-app .task-actions button {
   padding: 6px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -742,18 +794,18 @@
   transition: all 0.2s;
 }
 
-.task-actions button:hover {
+.arkone-app .task-actions button:hover {
   background-color: #f9fafb;
   border-color: #9ca3af;
 }
 
-.task-actions button.primary {
+.arkone-app .task-actions button.primary {
   background-color: #4299e1;
   color: white;
   border-color: #4299e1;
 }
 
-.task-actions button.primary:hover {
+.arkone-app .task-actions button.primary:hover {
   background-color: #3182ce;
 }
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createContext, useReducer, useContext } from 'react';
 import { projectReducer, initialState, ACTIONS } from './projectReducer';
-import apiService from '../services/api';
+import { processTaskData } from '../utils';
 
 // Create context
 const ProjectContext = createContext();
@@ -49,14 +49,22 @@ export function ProjectProvider({ children }) {
     dispatch({ type: ACTIONS.SET_SELECTED_TASK, payload: task });
   };
 
-  // Function to fetch projects
+  // Function to fetch projects using native Frappe API
   const fetchProjects = async () => {
     console.log('Fetching projects...'); // Debug logging
     setLoading(true);
     try {
-      const projects = await apiService.getProjects();
+      const response = await frappe.call({
+        method: 'frappe.client.get_list',
+        args: {
+          doctype: 'Project',
+          fields: ['name', 'project_name', 'status', 'expected_start_date', 'expected_end_date', 'percent_complete', 'priority'],
+          limit_page_length: 0,
+          order_by: 'creation desc'
+        }
+      });
+      const projects = response.message || [];
       console.log('Projects fetched:', projects); // Debug logging
-      // Ensure projects is always an array
       setProjects(Array.isArray(projects) ? projects : []);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -67,12 +75,22 @@ export function ProjectProvider({ children }) {
     }
   };
 
-  // Function to fetch all tasks regardless of project
+  // Function to fetch all tasks regardless of project using native Frappe API
   const fetchAllTasks = async () => {
     setTasksLoading(true);
     try {
-      const tasks = await apiService.getTasks();
-      setTasks(Array.isArray(tasks) ? tasks : []);
+      const response = await frappe.call({
+        method: 'frappe.client.get_list',
+        args: {
+          doctype: 'Task',
+          fields: ['name', 'subject', 'status', 'priority', 'project', '_assign', 'exp_start_date', 'exp_end_date', 'description'],
+          limit_page_length: 0,
+          order_by: 'creation desc'
+        }
+      });
+      const rawTasks = response.message || [];
+      const tasks = processTaskData(Array.isArray(rawTasks) ? rawTasks : []);
+      setTasks(tasks);
     } catch (error) {
       console.error('Error fetching all tasks:', error);
       setTasksError(error);
@@ -82,12 +100,25 @@ export function ProjectProvider({ children }) {
     }
   };
 
-  // Function to fetch tasks for a project
+  // Function to fetch tasks for a project using native Frappe API
   const fetchTasksForProject = async (projectName) => {
     setTasksLoading(true);
     try {
-      const tasks = await apiService.getTasks(projectName);
-      setTasks(Array.isArray(tasks) ? tasks : []);
+      const response = await frappe.call({
+        method: 'frappe.client.get_list',
+        args: {
+          doctype: 'Task',
+          filters: {
+            project: projectName
+          },
+          fields: ['name', 'subject', 'status', 'priority', 'project', '_assign', 'exp_start_date', 'exp_end_date', 'description'],
+          limit_page_length: 0,
+          order_by: 'creation desc'
+        }
+      });
+      const rawTasks = response.message || [];
+      const tasks = processTaskData(Array.isArray(rawTasks) ? rawTasks : []);
+      setTasks(tasks);
     } catch (error) {
       console.error(`Error fetching tasks for project ${projectName}:`, error);
       setTasksError(error);
@@ -97,17 +128,19 @@ export function ProjectProvider({ children }) {
     }
   };
 
-  // Function to create a new task
+  // Function to create a new task - now handled in forms using frappe.call
   const createTask = async (taskData) => {
     try {
-      const newTask = await apiService.createTask(taskData);
-      // Re-fetch tasks to update the list
+      // Task creation is now handled directly in AddTaskForm using frappe.call
+      // This function just refreshes the task list after creation
       if (state.selectedProject) {
         await fetchTasksForProject(state.selectedProject.name);
+      } else {
+        await fetchAllTasks();
       }
-      return newTask;
+      return true;
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error('Error refreshing tasks after creation:', error);
       throw error;
     }
   };
@@ -163,10 +196,18 @@ export function ProjectProvider({ children }) {
     }
   };
   
-  // Function to update task status
+  // Function to update task status using native Frappe API
   const updateTaskStatus = async (taskId, status) => {
     try {
-      await apiService.updateTaskStatus(taskId, status);
+      await frappe.call({
+        method: 'frappe.client.set_value',
+        args: {
+          doctype: 'Task',
+          name: taskId,
+          fieldname: 'status',
+          value: status
+        }
+      });
       
       // Refresh the task list
       if (state.selectedProject) {
@@ -178,6 +219,24 @@ export function ProjectProvider({ children }) {
       return true;
     } catch (error) {
       console.error('Error updating task status:', error);
+      throw error;
+    }
+  };
+
+  // Function to update task details - now handled in EditTaskForm using frappe.call
+  const updateTask = async (taskId, taskData) => {
+    try {
+      // Task update is now handled directly in EditTaskForm using frappe.call
+      // This function just refreshes the task list after update
+      if (state.selectedProject) {
+        await fetchTasksForProject(state.selectedProject.name);
+      } else {
+        await fetchAllTasks();
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error refreshing tasks after update:', error);
       throw error;
     }
   };
@@ -260,6 +319,7 @@ export function ProjectProvider({ children }) {
     fetchTasksForProject,
     fetchAllTasks,
     createTask,
+    updateTask,
     setSelectedTask,
     createTimesheetEntry,
     assignTaskToSelf,

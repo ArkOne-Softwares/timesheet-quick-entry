@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from "react"; // this is imporant do not remove
 import { App } from "./App";
 import { createRoot } from "react-dom/client";
 
@@ -66,7 +66,7 @@ class Project_Home {
 		$(this.secondary_btn).hide();
 		
 		// Reset page title
-		this.page.set_title(__("Project Home - Timesheet Quick Entry"));
+		this.page.set_title(__("Project Home"));
 	}
 }
 

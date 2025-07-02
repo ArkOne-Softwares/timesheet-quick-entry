@@ -1,12 +1,13 @@
 import * as React from "react";
 import { useState } from "react";
+import { FaClipboardList } from "react-icons/fa";
 import Projects from "./components/Projects";
 import Tasks from "./components/Tasks";
 import KanbanBoard from "./components/KanbanBoard";
 import FilterBar from "./components/FilterBar";
 import { ProjectProvider, useProjectContext } from "./store/ProjectContext";
 import Alltasks from "./components/Alltasks";
-import "../../css/arkone_projects.css"; 
+import "../../css/arkone_projects.css";
 
 const AppContent = ({ showTasks = false }) => {
   const { tasks, selectedProject } = useProjectContext();
@@ -62,13 +63,15 @@ const AppContent = ({ showTasks = false }) => {
                   onClick={() => setViewMode('kanban')}
                   className={viewMode === 'kanban' ? 'active' : ''}
                 >
-                  📋 Board
+                  <FaClipboardList style={{ marginRight: '6px' }} />
+                  Board
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
                   className={viewMode === 'list' ? 'active' : ''}
                 >
-                  📄 List
+                  <FaClipboardList style={{ marginRight: '6px' }} />
+                  List
                 </button>
               </div>
             )}
@@ -90,7 +93,9 @@ const AppContent = ({ showTasks = false }) => {
           {!selectedProject ? (
             <div className="arkone-empty-state">
               <div className="arkone-empty-state-content">
-                <div className="icon">📋</div>
+                <div className="icon">
+                  <FaClipboardList size={48} color="#cbd5e0" />
+                </div>
                 <h3>
                   Select a project to get started
                 </h3>

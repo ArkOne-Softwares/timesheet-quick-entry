@@ -1,6 +1,13 @@
 /**
  * Utility functions for the project management app
  */
+import React from 'react';
+import { 
+  FaCircle, 
+  FaExclamationCircle, 
+  FaExclamationTriangle, 
+  FaFire 
+} from 'react-icons/fa';
 
 // Get status color for UI elements
 export const getStatusColor = (status) => {
@@ -26,15 +33,48 @@ export const getPriorityColor = (priority) => {
   return priorityColors[priority] || 'bg-gray-100 text-gray-800';
 };
 
-// Get priority icon
+// Get priority icon component
 export const getPriorityIcon = (priority) => {
-  const priorityIcons = {
-    'Low': '🟢',
-    'Medium': '🟡', 
-    'High': '🟠',
-    'Urgent': '🔴'
-  };
-  return priorityIcons[priority] || '⚪';
+  const iconProps = { className: `priority-icon ${priority?.toLowerCase() || 'default'}` };
+  
+  switch (priority) {
+    case 'Low':
+      return React.createElement(FaCircle, iconProps);
+    case 'Medium':
+      return React.createElement(FaExclamationCircle, iconProps);
+    case 'High':
+      return React.createElement(FaExclamationTriangle, iconProps);
+    case 'Urgent':
+      return React.createElement(FaFire, iconProps);
+    default:
+      return React.createElement(FaCircle, iconProps);
+  }
+};
+
+// Parse ERPNext assignment data from _assign field
+export const parseAssignments = (assignField) => {
+  if (!assignField) return [];
+  
+  try {
+    // _assign field contains JSON string of assigned user emails
+    const assignments = JSON.parse(assignField);
+    return Array.isArray(assignments) ? assignments : [];
+  } catch (error) {
+    console.error('Error parsing assignment data:', error);
+    return [];
+  }
+};
+
+// Process task data to include parsed assignments
+export const processTaskData = (tasks) => {
+  if (!Array.isArray(tasks)) return [];
+  
+  return tasks.map(task => ({
+    ...task,
+    assignedUsers: parseAssignments(task._assign),
+    // Keep backward compatibility
+    assigned_to: parseAssignments(task._assign)?.[0] || null
+  }));
 };
 
 // Format date for display

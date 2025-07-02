@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaCalendarAlt, FaClock } from 'react-icons/fa';
 
 export default function FilterBar({ 
   data = [], 
@@ -198,25 +199,29 @@ export default function FilterBar({
                     onClick={() => setSortField('creation')}
                     className={`sort-button ${sortField === 'creation' ? 'active' : ''}`}
                   >
-                    📅 Created
+                    <FaCalendarAlt style={{ marginRight: '6px' }} />
+                    Created
                   </button>
                   <button
                     onClick={() => setSortField('modified')}
                     className={`sort-button ${sortField === 'modified' ? 'active' : ''}`}
                   >
-                    🔄 Updated
+                    <FaCalendarAlt style={{ marginRight: '6px' }} />
+                    Updated
                   </button>
                   <button
                     onClick={() => setSortField('exp_end_date')}
                     className={`sort-button ${sortField === 'exp_end_date' ? 'active' : ''}`}
                   >
-                    ⏰ Due Date
+                    <FaClock style={{ marginRight: '6px' }} />
+                    Due Date
                   </button>
                   <button
                     onClick={() => setSortField('priority')}
                     className={`sort-button ${sortField === 'priority' ? 'active' : ''}`}
                   >
-                    ⚡ Priority
+                    <FaClock style={{ marginRight: '6px' }} />
+                    Priority
                   </button>
                 </div>
                 
