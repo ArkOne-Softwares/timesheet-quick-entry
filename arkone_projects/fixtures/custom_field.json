@@ -1,0 +1,15 @@
+[
+  {
+    "doctype": "Custom Field",
+    "dt": "Project",
+    "fieldname": "timesheet_mode",
+    "label": "Timesheet Mode",
+    "fieldtype": "Select",
+    "options": "Per Task\nPer Day",
+    "default": "Per Task",
+    "insert_after": "expected_end_date",
+    "description": "Choose how timesheets are organized for this project - Per Task (one timesheet per task) or Per Day (one timesheet per day)",
+    "allow_on_submit": 0,
+    "translatable": 0
+  }
+]

@@ -232,6 +232,18 @@ after_install = "arkone_projects.setup.setup.after_install"
 # 	}
 # ]
 
+# Fixtures
+# -----------
+
+fixtures = [
+    {
+        "doctype": "Custom Field",
+        "filters": [
+            ["dt", "in", ["Project"]]
+        ]
+    }
+]
+
 # Authentication and authorization
 # --------------------------------
 

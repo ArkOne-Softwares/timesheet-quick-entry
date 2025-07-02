@@ -20,6 +20,7 @@ import { useProjectContext } from '../store/ProjectContext';
 import { getStatusColor, getPriorityIcon, formatDate, truncateText, extractInitials } from '../utils';
 import AddTaskForm from './AddTaskForm';
 import EditTaskForm from './EditTaskForm';
+import TimesheetForm from './TimesheetForm';
 import Modal from './Modal';
 import { hasTaskEditPermission } from '../permissions';
 
@@ -29,8 +30,10 @@ const KanbanBoard = ({ tasks = [] }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [showEditTaskForm, setShowEditTaskForm] = useState(false);
+  const [showTimesheetForm, setShowTimesheetForm] = useState(false);
   const [addTaskStatus, setAddTaskStatus] = useState('Open');
   const [editingTask, setEditingTask] = useState(null);
+  const [selectedTaskForTimesheet, setSelectedTaskForTimesheet] = useState(null);
   const [taskPermissions, setTaskPermissions] = useState({});
 
   // Standard task status columns
@@ -112,10 +115,35 @@ const KanbanBoard = ({ tasks = [] }) => {
         [destination.droppableId]: destColumn
       });
 
-      // Update backend
-      await updateTaskStatus(taskId, newStatus);
+      // Update backend - use special endpoint for completion
+      if (newStatus === 'Completed') {
+        const response = await frappe.call({
+          method: 'arkone_projects.arkone_projects.api.complete_task_and_submit_timesheets',
+          args: { task_id: taskId }
+        });
+        
+        if (response.message?.success) {
+          let message = 'Task completed successfully';
+          if (response.message.submitted_timesheets?.length > 0) {
+            message += ` and ${response.message.submitted_timesheets.length} timesheets submitted`;
+          }
+          frappe.show_alert({
+            message: message,
+            indicator: 'green'
+          });
+        } else {
+          throw new Error(response.message?.error || 'Failed to complete task');
+        }
+      } else {
+        // Regular status update
+        await updateTaskStatus(taskId, newStatus);
+      }
     } catch (error) {
       console.error('Failed to update task status:', error);
+      frappe.show_alert({
+        message: 'Failed to update task status: ' + (error.message || 'Unknown error'),
+        indicator: 'red'
+      });
       // Revert optimistic update by re-organizing tasks
       const revertedColumns = columnOrder.reduce((acc, status) => {
         acc[status] = tasks.filter(task => task.status === status);
@@ -140,6 +168,41 @@ const KanbanBoard = ({ tasks = [] }) => {
     }
     setShowEditTaskForm(false);
     setEditingTask(null);
+  };
+
+  // Handle timesheet for task
+  const handleTimesheetTask = (task, e) => {
+    e.stopPropagation(); // Prevent drag from starting
+    setSelectedTaskForTimesheet(task);
+    setShowTimesheetForm(true);
+  };
+
+  // Handle timesheet success
+  const handleTimesheetSuccess = () => {
+    // Refresh tasks for current project to update logged hours
+    if (selectedProject?.name) {
+      fetchTasksForProject(selectedProject.name);
+    }
+  };
+
+  // Handle task completion (automatically submit timesheet)
+  const handleCompleteTask = async (taskId) => {
+    try {
+      await frappe.call({
+        method: 'arkone_projects.arkone_projects.api.complete_task_and_submit_timesheets',
+        args: { task_id: taskId }
+      });
+      
+      // Refresh tasks
+      if (selectedProject) {
+        await fetchTasksForProject(selectedProject.name);
+      }
+      
+      frappe.msgprint('Task completed and timesheets submitted successfully');
+    } catch (error) {
+      console.error('Error completing task:', error);
+      frappe.msgprint('Error completing task and submitting timesheets');
+    }
   };
 
   // Task card component
@@ -173,6 +236,13 @@ const KanbanBoard = ({ tasks = [] }) => {
                     <FaEdit />
                   </button>
                 )}
+                <button
+                  className="task-timesheet-btn"
+                  onClick={(e) => handleTimesheetTask(task, e)}
+                  title="Add Timesheet"
+                >
+                  <FaClock />
+                </button>
                 <span className={`arkone-priority-badge ${task.priority?.toLowerCase()}`}>
                   {task.priority}
                 </span>
@@ -340,6 +410,28 @@ const KanbanBoard = ({ tasks = [] }) => {
               setEditingTask(null);
             }}
             onSuccess={handleEditTaskSuccess}
+          />
+        </Modal>
+      )}
+
+      {/* Timesheet Modal */}
+      {showTimesheetForm && selectedTaskForTimesheet && (
+        <Modal
+          title={`Timesheet for: ${selectedTaskForTimesheet.subject}`}
+          onClose={() => {
+            setShowTimesheetForm(false);
+            setSelectedTaskForTimesheet(null);
+          }}
+          isOpen={showTimesheetForm}
+        >
+          <TimesheetForm 
+            task={selectedTaskForTimesheet}
+            project={selectedProject}
+            onClose={() => {
+              setShowTimesheetForm(false);
+              setSelectedTaskForTimesheet(null);
+            }}
+            onSuccess={handleTimesheetSuccess}
           />
         </Modal>
       )}

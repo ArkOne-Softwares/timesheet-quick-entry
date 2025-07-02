@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaClock } from 'react-icons/fa';
 import { useProjectContext } from '../store/ProjectContext';
 import AddTaskForm from './AddTaskForm';
 import EditTaskForm from './EditTaskForm';
@@ -138,11 +138,37 @@ export default function Tasks({ tasks: tasksProp }) {
         setShowStatusDropdown(false);
         
         try {
-            await updateTaskStatus(selectedTask.name, status);
-            frappe.show_alert({
-                message: `Task status updated to ${status}`,
-                indicator: 'green'
-            });
+            if (status === 'Completed') {
+                // Use the special API endpoint that completes the task and submits timesheets
+                const response = await frappe.call({
+                    method: 'arkone_projects.arkone_projects.api.complete_task_and_submit_timesheets',
+                    args: { task_id: selectedTask.name }
+                });
+                
+                if (response.message?.success) {
+                    let message = 'Task completed successfully';
+                    if (response.message.submitted_timesheets?.length > 0) {
+                        message += ` and ${response.message.submitted_timesheets.length} timesheets submitted`;
+                    }
+                    frappe.show_alert({
+                        message: message,
+                        indicator: 'green'
+                    });
+                    
+                    if (response.message.warnings?.length > 0) {
+                        console.warn('Timesheet submission warnings:', response.message.warnings);
+                    }
+                } else {
+                    throw new Error(response.message?.error || 'Failed to complete task');
+                }
+            } else {
+                // Regular status update
+                await updateTaskStatus(selectedTask.name, status);
+                frappe.show_alert({
+                    message: `Task status updated to ${status}`,
+                    indicator: 'green'
+                });
+            }
         } catch (err) {
             setActionError("Failed to update status: " + (err.message || "Unknown error"));
         } finally {
@@ -248,7 +274,7 @@ export default function Tasks({ tasks: tasksProp }) {
                         {selectedTask && selectedTask.name === task.name && (
                             <div className="task-actions">
                                 <button className="timesheet-btn" onClick={handleAddTimesheet}>
-                                    Add Timesheet Entry
+                                    <FaClock /> Add Timesheet Entry
                                 </button>
                                 
                                 <button 
@@ -289,10 +315,21 @@ export default function Tasks({ tasks: tasksProp }) {
             </div>
 
             {showTimesheetForm && selectedTask && (
-                <TimesheetForm 
-                    task={selectedTask}
+                <Modal
+                    title={`Timesheet for: ${selectedTask.subject}`}
                     onClose={() => setShowTimesheetForm(false)}
-                />
+                    isOpen={showTimesheetForm}
+                >
+                    <TimesheetForm 
+                        task={selectedTask}
+                        project={selectedProject}
+                        onClose={() => setShowTimesheetForm(false)}
+                        onSuccess={() => {
+                            // Refresh tasks if needed
+                            setShowTimesheetForm(false);
+                        }}
+                    />
+                </Modal>
             )}
 
             <style jsx>{`

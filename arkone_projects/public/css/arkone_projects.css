@@ -1240,3 +1240,520 @@
     padding: 20px;
   }
 }
+
+/* Timesheet button styles */
+.task-timesheet-btn {
+  background: none;
+  border: none;
+  color: #4CAF50;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.task-timesheet-btn:hover {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #388E3C;
+  transform: scale(1.1);
+}
+
+.task-timesheet-btn:active {
+  transform: scale(0.95);
+}
+
+/* Timesheet form styles */
+.timesheet-form {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.timesheet-entries {
+  margin-bottom: 20px;
+}
+
+.timesheet-entry {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.timesheet-entry-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.timesheet-entry-date {
+  font-weight: 600;
+  color: #495057;
+}
+
+.timesheet-entry-hours {
+  background: #007bff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.timesheet-entry-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.timesheet-entry-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.timesheet-entry-actions .edit-btn {
+  color: #ffc107;
+}
+
+.timesheet-entry-actions .edit-btn:hover {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.timesheet-entry-actions .delete-btn {
+  color: #dc3545;
+}
+
+.timesheet-entry-actions .delete-btn:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.timesheet-entry-description {
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.timesheet-add-form {
+  background: #ffffff;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.timesheet-add-form.editing {
+  background: #fff3cd;
+  border-color: #ffc107;
+}
+
+.timesheet-form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.timesheet-form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.timesheet-form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.timesheet-form-group input,
+.timesheet-form-group select,
+.timesheet-form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.timesheet-form-group input:focus,
+.timesheet-form-group select:focus,
+.timesheet-form-group textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.timesheet-form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.timesheet-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.timesheet-add-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.timesheet-add-btn:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.timesheet-cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.timesheet-cancel-btn:hover {
+  background: #545b62;
+}
+
+.timesheet-save-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.timesheet-save-btn:hover {
+  background: #0056b3;
+}
+
+.timesheet-show-add-btn {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto 20px;
+  transition: all 0.2s ease;
+}
+
+.timesheet-show-add-btn:hover {
+  background: #138496;
+  transform: translateY(-1px);
+}
+
+.timesheet-no-entries {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 40px 20px;
+}
+
+.timesheet-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.timesheet-error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  border: 1px solid #f5c6cb;
+}
+
+/* Mobile responsive styles for timesheet */
+@media (max-width: 768px) {
+  .timesheet-form-row {
+    flex-direction: column;
+  }
+  
+  .timesheet-form-group {
+    min-width: auto;
+  }
+  
+  .timesheet-form-actions {
+    flex-direction: column;
+  }
+  
+  .timesheet-entry-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+/* Project Settings styles */
+.project-settings {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.project-settings-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.settings-icon {
+  color: #6c757d;
+  font-size: 20px;
+}
+
+.project-settings-header h3 {
+  margin: 0;
+  color: #495057;
+  font-size: 20px;
+}
+
+.settings-content {
+  margin-bottom: 30px;
+}
+
+.settings-section {
+  margin-bottom: 25px;
+}
+
+.settings-section h4 {
+  color: #495057;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.setting-item {
+  margin-bottom: 15px;
+}
+
+.setting-item label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.timesheet-mode-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.2s ease;
+}
+
+.timesheet-mode-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.setting-description {
+  margin-top: 8px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #6c757d;
+}
+
+.setting-description strong {
+  color: #495057;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid #dee2e6;
+}
+
+.settings-save-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.settings-save-btn:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.settings-save-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.settings-cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.settings-cancel-btn:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.settings-cancel-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.settings-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.settings-error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border: 1px solid #f5c6cb;
+}
+
+/* Mobile responsive styles for project settings */
+@media (max-width: 768px) {
+  .project-settings {
+    padding: 15px;
+  }
+  
+  .settings-actions {
+    flex-direction: column;
+  }
+  
+  .settings-save-btn,
+  .settings-cancel-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Project item wrapper with settings button */
+.project-item-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.project-item-wrapper.selected {
+  background-color: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+.project-item-wrapper:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.project-item-wrapper.selected:hover {
+  background-color: rgba(0, 123, 255, 0.15);
+}
+
+.project-item-wrapper .project-item {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #495057;
+  border-radius: 4px 0 0 4px;
+  transition: all 0.2s ease;
+}
+
+.project-item-wrapper .project-item:hover {
+  background-color: transparent;
+}
+
+.project-item-wrapper.selected .project-item {
+  color: #007bff;
+  font-weight: 600;
+}
+
+.project-settings-btn {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 12px;
+  border-radius: 0 4px 4px 0;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.project-item-wrapper:hover .project-settings-btn {
+  opacity: 1;
+}
+
+.project-settings-btn:hover {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #495057;
+  transform: scale(1.1);
+}
+
+.project-settings-btn:active {
+  transform: scale(0.95);
+}

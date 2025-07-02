@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaCog } from 'react-icons/fa';
 import { useProjectContext } from '../store/ProjectContext';
 import AddProjectForm from './AddProjectForm';
+import ProjectSettings from './ProjectSettings';
 import Modal from './Modal';
 
 export default function Projects() {
@@ -15,6 +16,8 @@ export default function Projects() {
     } = useProjectContext();
     
     const [showAddProjectForm, setShowAddProjectForm] = useState(false);
+    const [showProjectSettings, setShowProjectSettings] = useState(false);
+    const [settingsProject, setSettingsProject] = useState(null);
 
     useEffect(() => {
         fetchProjects();
@@ -28,6 +31,17 @@ export default function Projects() {
         // Refresh projects list
         fetchProjects();
         setShowAddProjectForm(false);
+    };
+
+    const handleProjectSettings = (project, e) => {
+        e.stopPropagation(); // Prevent project selection
+        setSettingsProject(project);
+        setShowProjectSettings(true);
+    };
+
+    const handleSettingsSuccess = () => {
+        // Refresh projects if needed
+        fetchProjects();
     };
 
     return (
@@ -57,19 +71,51 @@ export default function Projects() {
                     />
                 </Modal>
             )}
+
+            {/* Project Settings Modal */}
+            {showProjectSettings && settingsProject && (
+                <Modal
+                    title={`Settings - ${settingsProject.project_name || settingsProject.name}`}
+                    onClose={() => {
+                        setShowProjectSettings(false);
+                        setSettingsProject(null);
+                    }}
+                    isOpen={showProjectSettings}
+                >
+                    <ProjectSettings 
+                        project={settingsProject}
+                        onClose={() => {
+                            setShowProjectSettings(false);
+                            setSettingsProject(null);
+                        }}
+                        onSuccess={handleSettingsSuccess}
+                    />
+                </Modal>
+            )}
             
             {isLoading && <p>Loading...</p>}
             {error && <p style={{color: '#dc3545'}}>Error: {error.message || error}</p>}
             <div className="project-list">
                 {projects && Array.isArray(projects) && projects.length > 0 ? (
                     projects.map((project) => (
-                        <button 
+                        <div 
                             key={project.name} 
-                            className={`project-item ${selectedProject && selectedProject.name === project.name ? 'selected' : ''}`}
-                            onClick={() => handleSelectProject(project)}
+                            className={`project-item-wrapper ${selectedProject && selectedProject.name === project.name ? 'selected' : ''}`}
                         >
-                            {project.project_name || project.name}
-                        </button>
+                            <button 
+                                className="project-item"
+                                onClick={() => handleSelectProject(project)}
+                            >
+                                {project.project_name || project.name}
+                            </button>
+                            <button
+                                className="project-settings-btn"
+                                onClick={(e) => handleProjectSettings(project, e)}
+                                title="Project Settings"
+                            >
+                                <FaCog />
+                            </button>
+                        </div>
                     ))
                 ) : (
                     !isLoading && (
