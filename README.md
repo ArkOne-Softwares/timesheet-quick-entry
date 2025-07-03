@@ -1,5 +1,18 @@
 # 🚀 Arkone Projects - Mobile-First Project Management
 
+## Work in Progress (WIP) Status
+
+This repository is currently a work in progress.
+
+Please note:
+
+*   The code may be incomplete or unstable.
+*   Documentation is still being written.
+*   Features are subject to change.
+*   Feedback and contributions are welcome.
+
+---
+
 A mobile-first React + ERPNext project management tool with Kanban boards, task management, and timesheet tracking.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
