@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaClock } from 'react-icons/fa';
+import { FaEdit, FaClock, FaUser } from 'react-icons/fa';
 import { useProjectContext } from '../store/ProjectContext';
 import AddTaskForm from './AddTaskForm';
 import EditTaskForm from './EditTaskForm';
 import TimesheetForm from './TimesheetForm';
+import AssignmentForm from './AssignmentForm';
 import Modal from './Modal';
 import { hasTaskEditPermission } from '../permissions';
 
@@ -27,6 +28,8 @@ export default function Tasks({ tasks: tasksProp }) {
     const [showEditTaskForm, setShowEditTaskForm] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [showTimesheetForm, setShowTimesheetForm] = useState(false);
+    const [showAssignmentForm, setShowAssignmentForm] = useState(false);
+    const [selectedTaskForAssignment, setSelectedTaskForAssignment] = useState(null);
     const [taskStatusOptions, setTaskStatusOptions] = useState([]);
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     const [isAssigning, setIsAssigning] = useState(false);
@@ -126,6 +129,22 @@ export default function Tasks({ tasks: tasksProp }) {
         }
     };
     
+    const handleAssignTask = (task, e) => {
+        e.stopPropagation();
+        setSelectedTaskForAssignment(task);
+        setShowAssignmentForm(true);
+        setShowStatusDropdown(false);
+    };
+
+    const handleAssignmentSuccess = () => {
+        // Refresh tasks for current project
+        if (selectedProject?.name) {
+            fetchTasksForProject(selectedProject.name);
+        }
+        setShowAssignmentForm(false);
+        setSelectedTaskForAssignment(null);
+    };
+    
     const toggleStatusDropdown = (e) => {
         e.stopPropagation();
         setShowStatusDropdown(!showStatusDropdown);
@@ -223,6 +242,28 @@ export default function Tasks({ tasks: tasksProp }) {
                 </Modal>
             )}
 
+            {/* Assignment Form Modal */}
+            {showAssignmentForm && selectedTaskForAssignment && (
+                <Modal
+                    title={`Assign Task: ${selectedTaskForAssignment.subject}`}
+                    onClose={() => {
+                        setShowAssignmentForm(false);
+                        setSelectedTaskForAssignment(null);
+                    }}
+                    isOpen={showAssignmentForm}
+                >
+                    <AssignmentForm 
+                        task={selectedTaskForAssignment}
+                        project={selectedProject}
+                        onClose={() => {
+                            setShowAssignmentForm(false);
+                            setSelectedTaskForAssignment(null);
+                        }}
+                        onSuccess={handleAssignmentSuccess}
+                    />
+                </Modal>
+            )}
+
             {tasksLoading && <p className="loading">Loading tasks...</p>}
             {tasksError && <p className="error">Error: {tasksError.message}</p>}
             {actionError && <p className="error">{actionError}</p>}
@@ -283,6 +324,13 @@ export default function Tasks({ tasks: tasksProp }) {
                                     disabled={isAssigning}
                                 >
                                     {isAssigning ? 'Assigning...' : 'Assign to Me'}
+                                </button>
+                                
+                                <button 
+                                    className="assign-task-btn" 
+                                    onClick={(e) => handleAssignTask(task, e)}
+                                >
+                                    <FaUser /> Assign Task
                                 </button>
                                 
                                 <div className="status-dropdown-container">
@@ -499,6 +547,23 @@ export default function Tasks({ tasks: tasksProp }) {
                 }
                 .status-btn:hover:not(:disabled) {
                     background-color: #e5ecff;
+                }
+                .assign-task-btn {
+                    background-color: #3b82f6;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    transition: background-color 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+
+                .assign-task-btn:hover {
+                    background-color: #2563eb;
                 }
                 .status-dropdown-container {
                     position: relative;

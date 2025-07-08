@@ -7,19 +7,73 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
+  const [departments, setDepartments] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [activityTypes, setActivityTypes] = useState([]);
+  const [projectDetails, setProjectDetails] = useState({});
   const [formData, setFormData] = useState({
     hours: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
-    activity_type: 'Task'
+    activity_type: 'Task',
+    department: '',
+    customer: ''
   });
 
   // Fetch existing timesheet entries
   useEffect(() => {
-    if (task) {
+    if (task && project) {
       fetchTimesheetEntries();
+      fetchFormData();
     }
-  }, [task]);
+  }, [task, project]);
+
+  const fetchFormData = async () => {
+    try {
+      // Fetch departments
+      const deptResponse = await frappe.call({
+        method: 'arkone_projects.arkone_projects.api.get_departments'
+      });
+      if (deptResponse.message?.success) {
+        setDepartments(deptResponse.message.departments || []);
+      }
+
+      // Fetch customers
+      const custResponse = await frappe.call({
+        method: 'arkone_projects.arkone_projects.api.get_customers'
+      });
+      if (custResponse.message?.success) {
+        setCustomers(custResponse.message.customers || []);
+      }
+
+      // Fetch activity types
+      const actResponse = await frappe.call({
+        method: 'arkone_projects.arkone_projects.api.get_activity_types'
+      });
+      if (actResponse.message?.success) {
+        setActivityTypes(actResponse.message.activity_types || []);
+      }
+
+      // Fetch project details
+      const projResponse = await frappe.call({
+        method: 'arkone_projects.arkone_projects.api.get_project_details',
+        args: { project_id: project.name }
+      });
+      if (projResponse.message?.success) {
+        const projData = projResponse.message.details;
+        setProjectDetails(projData);
+        
+        // Set default values from project
+        setFormData(prev => ({
+          ...prev,
+          customer: projData.customer || '',
+          department: projData.department || ''
+        }));
+      }
+    } catch (err) {
+      console.error('Error fetching form data:', err);
+    }
+  };
 
   const fetchTimesheetEntries = async () => {
     try {
@@ -58,7 +112,9 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
           hours: parseFloat(formData.hours),
           description: formData.description,
           date: formData.date,
-          activity_type: formData.activity_type
+          activity_type: formData.activity_type,
+          department: formData.department,
+          customer: formData.customer
         }
       });
 
@@ -67,7 +123,9 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
           hours: '',
           description: '',
           date: new Date().toISOString().split('T')[0],
-          activity_type: 'Task'
+          activity_type: 'Task',
+          department: projectDetails.department || '',
+          customer: projectDetails.customer || ''
         });
         setShowAddForm(false);
         fetchTimesheetEntries();
@@ -106,7 +164,9 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
           hours: '',
           description: '',
           date: new Date().toISOString().split('T')[0],
-          activity_type: 'Task'
+          activity_type: 'Task',
+          department: projectDetails.department || '',
+          customer: projectDetails.customer || ''
         });
         fetchTimesheetEntries();
         if (onSuccess) onSuccess();
@@ -153,7 +213,9 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
       hours: entry.hours.toString(),
       description: entry.description,
       date: entry.start_date,
-      activity_type: entry.activity_type || 'Task'
+      activity_type: entry.activity_type || 'Task',
+      department: entry.department || projectDetails.department || '',
+      customer: entry.customer || projectDetails.customer || ''
     });
     setShowAddForm(true);
   };
@@ -164,7 +226,9 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
       hours: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
-      activity_type: 'Task'
+      activity_type: 'Task',
+      department: projectDetails.department || '',
+      customer: projectDetails.customer || ''
     });
     setShowAddForm(false);
   };
@@ -287,13 +351,56 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
                   value={formData.activity_type}
                   onChange={(e) => setFormData({ ...formData, activity_type: e.target.value })}
                 >
-                  <option value="Task">Task</option>
-                  <option value="Research">Research</option>
-                  <option value="Development">Development</option>
-                  <option value="Testing">Testing</option>
-                  <option value="Documentation">Documentation</option>
-                  <option value="Meeting">Meeting</option>
+                  {activityTypes.length > 0 ? (
+                    activityTypes.map(type => (
+                      <option key={type.name} value={type.name}>
+                        {type.activity_type || type.name}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Task">Task</option>
+                      <option value="Research">Research</option>
+                      <option value="Development">Development</option>
+                      <option value="Testing">Testing</option>
+                      <option value="Documentation">Documentation</option>
+                      <option value="Meeting">Meeting</option>
+                    </>
+                  )}
                 </select>
+              </div>
+
+              <div className="timesheet-form-row">
+                <div className="timesheet-form-group">
+                  <label htmlFor="department">Department</label>
+                  <select
+                    id="department"
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map(dept => (
+                      <option key={dept.name} value={dept.name}>
+                        {dept.department_name || dept.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="timesheet-form-group">
+                  <label htmlFor="customer">Customer</label>
+                  <select
+                    id="customer"
+                    value={formData.customer}
+                    onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                  >
+                    <option value="">Select Customer</option>
+                    {customers.map(cust => (
+                      <option key={cust.name} value={cust.name}>
+                        {cust.customer_name || cust.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="timesheet-form-group">

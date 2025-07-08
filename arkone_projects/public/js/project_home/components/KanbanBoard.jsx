@@ -14,13 +14,15 @@ import {
   FaEdit,
   FaFolder,
   FaCalendarAlt,
-  FaClock
+  FaClock,
+  FaUser
 } from 'react-icons/fa';
 import { useProjectContext } from '../store/ProjectContext';
 import { getStatusColor, getPriorityIcon, formatDate, truncateText, extractInitials } from '../utils';
 import AddTaskForm from './AddTaskForm';
 import EditTaskForm from './EditTaskForm';
 import TimesheetForm from './TimesheetForm';
+import AssignmentForm from './AssignmentForm';
 import Modal from './Modal';
 import { hasTaskEditPermission } from '../permissions';
 
@@ -31,9 +33,11 @@ const KanbanBoard = ({ tasks = [] }) => {
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [showEditTaskForm, setShowEditTaskForm] = useState(false);
   const [showTimesheetForm, setShowTimesheetForm] = useState(false);
+  const [showAssignmentForm, setShowAssignmentForm] = useState(false);
   const [addTaskStatus, setAddTaskStatus] = useState('Open');
   const [editingTask, setEditingTask] = useState(null);
   const [selectedTaskForTimesheet, setSelectedTaskForTimesheet] = useState(null);
+  const [selectedTaskForAssignment, setSelectedTaskForAssignment] = useState(null);
   const [taskPermissions, setTaskPermissions] = useState({});
 
   // Standard task status columns
@@ -185,24 +189,21 @@ const KanbanBoard = ({ tasks = [] }) => {
     }
   };
 
-  // Handle task completion (automatically submit timesheet)
-  const handleCompleteTask = async (taskId) => {
-    try {
-      await frappe.call({
-        method: 'arkone_projects.arkone_projects.api.complete_task_and_submit_timesheets',
-        args: { task_id: taskId }
-      });
-      
-      // Refresh tasks
-      if (selectedProject) {
-        await fetchTasksForProject(selectedProject.name);
-      }
-      
-      frappe.msgprint('Task completed and timesheets submitted successfully');
-    } catch (error) {
-      console.error('Error completing task:', error);
-      frappe.msgprint('Error completing task and submitting timesheets');
+  // Handle assignment for task
+  const handleAssignTask = (task, e) => {
+    e.stopPropagation(); // Prevent drag from starting
+    setSelectedTaskForAssignment(task);
+    setShowAssignmentForm(true);
+  };
+
+  // Handle assignment success
+  const handleAssignmentSuccess = () => {
+    // Refresh tasks for current project to update assignments
+    if (selectedProject?.name) {
+      fetchTasksForProject(selectedProject.name);
     }
+    setShowAssignmentForm(false);
+    setSelectedTaskForAssignment(null);
   };
 
   // Task card component
@@ -243,6 +244,13 @@ const KanbanBoard = ({ tasks = [] }) => {
                 >
                   <FaClock />
                 </button>
+                <button
+                  className="task-assign-btn"
+                  onClick={(e) => handleAssignTask(task, e)}
+                  title="Assign Task"
+                >
+                  <FaUser />
+                </button>
                 <span className={`arkone-priority-badge ${task.priority?.toLowerCase()}`}>
                   {task.priority}
                 </span>
@@ -277,24 +285,42 @@ const KanbanBoard = ({ tasks = [] }) => {
               </div>
             )}
 
-            {/* Assigned user and hours */}
+            {/* Assigned users and hours */}
             <div className="arkone-task-meta">
               <div className="arkone-task-assignee">
-                <div className="arkone-avatar">
-                  {task.assignedUsers && task.assignedUsers.length > 0 ? 
-                    extractInitials(task.assignedUsers[0]) : 
-                    (task.owner ? extractInitials(task.owner) : 'U')
-                  }
+                <div className="arkone-task-avatars">
+                  {task.assignedUsers && task.assignedUsers.length > 0 ? (
+                    task.assignedUsers.slice(0, 2).map((user, index) => (
+                      <div key={index} className="arkone-avatar">
+                        {extractInitials(user)}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="arkone-avatar unassigned">
+                      U
+                    </div>
+                  )}
+                  {task.assignedUsers && task.assignedUsers.length > 2 && (
+                    <div className="arkone-avatar more-users">
+                      +{task.assignedUsers.length - 2}
+                    </div>
+                  )}
                 </div>
-                <span>
+                <span className="arkone-task-assignee-text">
                   {isMobile ? 
                     (task.assignedUsers && task.assignedUsers.length > 0 ? 
-                      extractInitials(task.assignedUsers[0]) : 
-                      (task.owner ? extractInitials(task.owner) : 'Unassigned')
+                      (task.assignedUsers.length === 1 ? 
+                        extractInitials(task.assignedUsers[0]) : 
+                        `${task.assignedUsers.length} users`
+                      ) : 
+                      'Unassigned'
                     ) : 
                     (task.assignedUsers && task.assignedUsers.length > 0 ? 
-                      task.assignedUsers[0] : 
-                      (task.owner || 'Unassigned')
+                      (task.assignedUsers.length === 1 ? 
+                        task.assignedUsers[0] : 
+                        `${task.assignedUsers.length} users assigned`
+                      ) : 
+                      'Unassigned'
                     )
                   }
                 </span>
@@ -432,6 +458,28 @@ const KanbanBoard = ({ tasks = [] }) => {
               setSelectedTaskForTimesheet(null);
             }}
             onSuccess={handleTimesheetSuccess}
+          />
+        </Modal>
+      )}
+
+      {/* Assignment Modal */}
+      {showAssignmentForm && selectedTaskForAssignment && (
+        <Modal
+          title={`Assign Task: ${selectedTaskForAssignment.subject}`}
+          onClose={() => {
+            setShowAssignmentForm(false);
+            setSelectedTaskForAssignment(null);
+          }}
+          isOpen={showAssignmentForm}
+        >
+          <AssignmentForm 
+            task={selectedTaskForAssignment}
+            project={selectedProject}
+            onClose={() => {
+              setShowAssignmentForm(false);
+              setSelectedTaskForAssignment(null);
+            }}
+            onSuccess={handleAssignmentSuccess}
           />
         </Modal>
       )}

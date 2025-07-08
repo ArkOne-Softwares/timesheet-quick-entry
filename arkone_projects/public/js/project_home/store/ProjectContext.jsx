@@ -75,22 +75,21 @@ export function ProjectProvider({ children }) {
     }
   };
 
-  // Function to fetch all tasks regardless of project using native Frappe API
+  // Function to fetch all tasks regardless of project using custom API
   const fetchAllTasks = async () => {
     setTasksLoading(true);
     try {
       const response = await frappe.call({
-        method: 'frappe.client.get_list',
-        args: {
-          doctype: 'Task',
-          fields: ['name', 'subject', 'status', 'priority', 'project', '_assign', 'exp_start_date', 'exp_end_date', 'description'],
-          limit_page_length: 0,
-          order_by: 'creation desc'
-        }
+        method: 'arkone_projects.arkone_projects.api.get_tasks_with_assignments',
+        args: {}
       });
-      const rawTasks = response.message || [];
-      const tasks = processTaskData(Array.isArray(rawTasks) ? rawTasks : []);
-      setTasks(tasks);
+      if (response.message?.success) {
+        const rawTasks = response.message.tasks || [];
+        const tasks = processTaskData(Array.isArray(rawTasks) ? rawTasks : []);
+        setTasks(tasks);
+      } else {
+        throw new Error(response.message?.error || 'Failed to fetch tasks');
+      }
     } catch (error) {
       console.error('Error fetching all tasks:', error);
       setTasksError(error);
@@ -100,25 +99,23 @@ export function ProjectProvider({ children }) {
     }
   };
 
-  // Function to fetch tasks for a project using native Frappe API
+  // Function to fetch tasks for a project using custom API
   const fetchTasksForProject = async (projectName) => {
     setTasksLoading(true);
     try {
       const response = await frappe.call({
-        method: 'frappe.client.get_list',
+        method: 'arkone_projects.arkone_projects.api.get_tasks_with_assignments',
         args: {
-          doctype: 'Task',
-          filters: {
-            project: projectName
-          },
-          fields: ['name', 'subject', 'status', 'priority', 'project', '_assign', 'exp_start_date', 'exp_end_date', 'description'],
-          limit_page_length: 0,
-          order_by: 'creation desc'
+          project_name: projectName
         }
       });
-      const rawTasks = response.message || [];
-      const tasks = processTaskData(Array.isArray(rawTasks) ? rawTasks : []);
-      setTasks(tasks);
+      if (response.message?.success) {
+        const rawTasks = response.message.tasks || [];
+        const tasks = processTaskData(Array.isArray(rawTasks) ? rawTasks : []);
+        setTasks(tasks);
+      } else {
+        throw new Error(response.message?.error || 'Failed to fetch tasks');
+      }
     } catch (error) {
       console.error(`Error fetching tasks for project ${projectName}:`, error);
       setTasksError(error);

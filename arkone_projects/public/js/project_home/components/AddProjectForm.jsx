@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function AddProjectForm({ onCancel, onSuccess }) {
     const [formData, setFormData] = useState({
@@ -14,6 +14,42 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [departments, setDepartments] = useState([]);
+    const [customers, setCustomers] = useState([]);
+    const [loadingOptions, setLoadingOptions] = useState(true);
+
+    // Fetch departments and customers on component mount
+    useEffect(() => {
+        fetchDropdownOptions();
+    }, []);
+
+    const fetchDropdownOptions = async () => {
+        try {
+            setLoadingOptions(true);
+            
+            // Fetch departments
+            const deptResponse = await frappe.call({
+                method: 'arkone_projects.arkone_projects.api.get_departments'
+            });
+            
+            if (deptResponse.message?.success) {
+                setDepartments(deptResponse.message.departments || []);
+            }
+            
+            // Fetch customers
+            const custResponse = await frappe.call({
+                method: 'arkone_projects.arkone_projects.api.get_customers'
+            });
+            
+            if (custResponse.message?.success) {
+                setCustomers(custResponse.message.customers || []);
+            }
+        } catch (err) {
+            console.error('Error fetching dropdown options:', err);
+        } finally {
+            setLoadingOptions(false);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -53,14 +89,33 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
         setError(null);
 
         try {
+            // Prepare project data, excluding empty department and customer fields
+            const projectData = {
+                doctype: 'Project',
+                project_name: formData.project_name,
+                status: formData.status,
+                priority: formData.priority,
+                expected_start_date: formData.expected_start_date || null,
+                expected_end_date: formData.expected_end_date || null,
+                project_type: formData.project_type,
+                description: formData.description || null
+            };
+
+            // Only include department if it's selected and valid
+            if (formData.department && formData.department.trim()) {
+                projectData.department = formData.department;
+            }
+
+            // Only include customer if it's selected and valid
+            if (formData.customer && formData.customer.trim()) {
+                projectData.customer = formData.customer;
+            }
+
             // Use Frappe's native API to create project
             const response = await frappe.call({
                 method: 'frappe.client.insert',
                 args: {
-                    doc: {
-                        doctype: 'Project',
-                        ...formData
-                    }
+                    doc: projectData
                 }
             });
 
@@ -159,14 +214,19 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
                     
                     <div className="form-group">
                         <label htmlFor="department">Department</label>
-                        <input
-                            type="text"
+                        <select
                             id="department"
                             name="department"
                             value={formData.department}
                             onChange={handleChange}
-                            placeholder="e.g., Engineering, Marketing"
-                        />
+                        >
+                            <option value="">Select Department (Optional)</option>
+                            {departments.map((dept) => (
+                                <option key={dept.name} value={dept.name}>
+                                    {dept.department_name || dept.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
                 
@@ -174,14 +234,19 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
                 {formData.project_type === 'External' && (
                     <div className="form-group">
                         <label htmlFor="customer">Customer</label>
-                        <input
-                            type="text"
+                        <select
                             id="customer"
                             name="customer"
                             value={formData.customer}
                             onChange={handleChange}
-                            placeholder="Customer or client name"
-                        />
+                        >
+                            <option value="">Select Customer (Optional)</option>
+                            {customers.map((cust) => (
+                                <option key={cust.name} value={cust.name}>
+                                    {cust.customer_name || cust.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 )}
                 
