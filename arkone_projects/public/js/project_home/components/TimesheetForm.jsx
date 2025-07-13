@@ -154,7 +154,9 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
         args: {
           detail_name: editingEntry.name,
           hours: parseFloat(formData.hours),
-          description: formData.description
+          description: formData.description,
+          date: formData.date,
+          activity_type: formData.activity_type
         }
       });
 

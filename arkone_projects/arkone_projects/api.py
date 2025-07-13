@@ -109,6 +109,7 @@ def create_timesheet_entry(task_id, project_id, hours, description, activity_typ
             timesheet_doc.total_hours = flt(hours)
             
             timesheet_doc.save(ignore_permissions=True)
+            frappe.db.commit()
             timesheet_name = timesheet_doc.name
             
             return {
@@ -137,6 +138,7 @@ def create_timesheet_entry(task_id, project_id, hours, description, activity_typ
         timesheet_doc.total_hours = total_hours
         
         timesheet_doc.save(ignore_permissions=True)
+        frappe.db.commit()
         
         return {
             "success": True,
@@ -181,7 +183,7 @@ def get_task_timesheet_entries(task_id):
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()
-def update_timesheet_entry(detail_name, hours, description, billing_hours=None):
+def update_timesheet_entry(detail_name, hours, description, billing_hours=None, date=None, activity_type=None):
     """
     Update an existing timesheet entry
     """
@@ -198,11 +200,21 @@ def update_timesheet_entry(detail_name, hours, description, billing_hours=None):
         detail_doc.billing_hours = flt(billing_hours) if billing_hours else flt(hours)
         detail_doc.description = description
         
-        # Update to_time based on new hours
-        if detail_doc.from_time:
-            detail_doc.to_time = add_to_date(detail_doc.from_time, hours=flt(hours))
+        # Update activity type if provided
+        if activity_type:
+            detail_doc.activity_type = activity_type
+        
+        # Update date if provided
+        if date:
+            detail_doc.from_time = get_datetime(f"{date} 09:00:00")
+            detail_doc.to_time = add_to_date(get_datetime(f"{date} 09:00:00"), hours=flt(hours))
+        else:
+            # Update to_time based on new hours
+            if detail_doc.from_time:
+                detail_doc.to_time = add_to_date(detail_doc.from_time, hours=flt(hours))
         
         timesheet_doc.save(ignore_permissions=True)
+        frappe.db.commit()
         
         return {
             "success": True,
@@ -232,8 +244,10 @@ def delete_timesheet_entry(detail_name):
         # If no more details, delete the entire timesheet
         if not timesheet_doc.time_logs:
             timesheet_doc.delete(ignore_permissions=True)
+            frappe.db.commit()
         else:
             timesheet_doc.save(ignore_permissions=True)
+            frappe.db.commit()
         
         return {
             "success": True,

@@ -465,9 +465,10 @@
 
 .arkone-task-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 8px;
+  gap: 8px;
 }
 
 .arkone-task-title-section {
@@ -482,12 +483,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
 }
 
-.arkone-app .task-edit-btn {
+.arkone-app .task-edit-btn,
+.task-timesheet-btn,
+.task-assign-btn {
   background: none;
   border: none;
-  padding: 4px;
+  padding: 6px;
   cursor: pointer;
   border-radius: 4px;
   font-size: 0.875rem;
@@ -499,15 +503,34 @@
   pointer-events: auto;
   position: relative;
   z-index: 10;
+  width: 28px;
+  height: 28px;
 }
 
-.arkone-app .task-edit-btn:hover {
+.arkone-app .task-edit-btn:hover,
+.task-timesheet-btn:hover,
+.task-assign-btn:hover {
   opacity: 1;
-  background-color: rgba(59, 130, 246, 0.1);
   transform: scale(1.1);
 }
 
-.arkone-task-card:hover .arkone-app .task-edit-btn {
+.arkone-app .task-edit-btn:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.task-timesheet-btn:hover {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #388E3C;
+}
+
+.task-assign-btn:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.arkone-task-card:hover .arkone-app .task-edit-btn,
+.arkone-task-card:hover .task-timesheet-btn,
+.arkone-task-card:hover .task-assign-btn {
   opacity: 1;
 }
 
@@ -593,12 +616,18 @@
 .arkone-task-assignee {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+}
+
+.arkone-task-avatars {
+  display: flex;
+  gap: -2px;
+  align-items: center;
 }
 
 .arkone-avatar {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   background-color: #4299e1;
   border-radius: 50%;
   display: flex;
@@ -607,6 +636,21 @@
   color: white;
   font-size: 0.625rem;
   font-weight: 600;
+  border: 2px solid white;
+  margin-left: -2px;
+}
+
+.arkone-avatar:first-child {
+  margin-left: 0;
+}
+
+.arkone-avatar.unassigned {
+  background-color: #9ca3af;
+}
+
+.arkone-avatar.more-users {
+  background-color: #3b82f6;
+  font-size: 0.5rem;
 }
 
 /* Tasks Component Styles */
@@ -1242,31 +1286,6 @@
   .modal-body {
     padding: 20px;
   }
-}
-
-/* Timesheet button styles */
-.task-timesheet-btn {
-  background: none;
-  border: none;
-  color: #4CAF50;
-  cursor: pointer;
-  padding: 4px;
-  font-size: 14px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  pointer-events: auto;
-  position: relative;
-  z-index: 10;
-}
-
-.task-timesheet-btn:hover {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: #388E3C;
-  transform: scale(1.1);
-}
-
-.task-timesheet-btn:active {
-  transform: scale(0.95);
 }
 
 /* Timesheet form styles */

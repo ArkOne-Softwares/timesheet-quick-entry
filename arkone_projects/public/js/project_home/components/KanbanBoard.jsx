@@ -219,7 +219,7 @@ const KanbanBoard = ({ tasks = [] }) => {
             {...provided.dragHandleProps}
             className={`arkone-task-card ${snapshot.isDragging ? 'dragging' : ''}`}
           >
-            {/* Priority indicator and title */}
+            {/* Priority indicator, title, and assigned users */}
             <div className="arkone-task-header">
               <div className="arkone-task-title-section">
                 <span>{getPriorityIcon(task.priority)}</span>
@@ -227,33 +227,25 @@ const KanbanBoard = ({ tasks = [] }) => {
                   {isMobile ? truncateText(task.subject, 25) : task.subject}
                 </h4>
               </div>
-              <div className="arkone-task-actions">
-                {canEdit && (
-                  <button
-                    className="task-edit-btn"
-                    onClick={(e) => handleEditTask(task, e)}
-                    title="Edit Task"
-                  >
-                    <FaEdit />
-                  </button>
-                )}
-                <button
-                  className="task-timesheet-btn"
-                  onClick={(e) => handleTimesheetTask(task, e)}
-                  title="Add Timesheet"
-                >
-                  <FaClock />
-                </button>
-                <button
-                  className="task-assign-btn"
-                  onClick={(e) => handleAssignTask(task, e)}
-                  title="Assign Task"
-                >
-                  <FaUser />
-                </button>
-                <span className={`arkone-priority-badge ${task.priority?.toLowerCase()}`}>
-                  {task.priority}
-                </span>
+              <div className="arkone-task-assignee">
+                <div className="arkone-task-avatars">
+                  {task.assignedUsers && task.assignedUsers.length > 0 ? (
+                    task.assignedUsers.slice(0, 2).map((user, index) => (
+                      <div key={index} className="arkone-avatar">
+                        {extractInitials(user)}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="arkone-avatar unassigned">
+                      U
+                    </div>
+                  )}
+                  {task.assignedUsers && task.assignedUsers.length > 2 && (
+                    <div className="arkone-avatar more-users">
+                      +{task.assignedUsers.length - 2}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -285,44 +277,34 @@ const KanbanBoard = ({ tasks = [] }) => {
               </div>
             )}
 
-            {/* Assigned users and hours */}
+            {/* Action buttons and hours */}
             <div className="arkone-task-meta">
-              <div className="arkone-task-assignee">
-                <div className="arkone-task-avatars">
-                  {task.assignedUsers && task.assignedUsers.length > 0 ? (
-                    task.assignedUsers.slice(0, 2).map((user, index) => (
-                      <div key={index} className="arkone-avatar">
-                        {extractInitials(user)}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="arkone-avatar unassigned">
-                      U
-                    </div>
-                  )}
-                  {task.assignedUsers && task.assignedUsers.length > 2 && (
-                    <div className="arkone-avatar more-users">
-                      +{task.assignedUsers.length - 2}
-                    </div>
-                  )}
-                </div>
-                <span className="arkone-task-assignee-text">
-                  {isMobile ? 
-                    (task.assignedUsers && task.assignedUsers.length > 0 ? 
-                      (task.assignedUsers.length === 1 ? 
-                        extractInitials(task.assignedUsers[0]) : 
-                        `${task.assignedUsers.length} users`
-                      ) : 
-                      'Unassigned'
-                    ) : 
-                    (task.assignedUsers && task.assignedUsers.length > 0 ? 
-                      (task.assignedUsers.length === 1 ? 
-                        task.assignedUsers[0] : 
-                        `${task.assignedUsers.length} users assigned`
-                      ) : 
-                      'Unassigned'
-                    )
-                  }
+              <div className="arkone-task-actions">
+                {canEdit && (
+                  <button
+                    className="task-edit-btn"
+                    onClick={(e) => handleEditTask(task, e)}
+                    title="Edit Task"
+                  >
+                    <FaEdit />
+                  </button>
+                )}
+                <button
+                  className="task-timesheet-btn"
+                  onClick={(e) => handleTimesheetTask(task, e)}
+                  title="Add Timesheet"
+                >
+                  <FaClock />
+                </button>
+                <button
+                  className="task-assign-btn"
+                  onClick={(e) => handleAssignTask(task, e)}
+                  title="Assign Task"
+                >
+                  <FaUser />
+                </button>
+                <span className={`arkone-priority-badge ${task.priority?.toLowerCase()}`}>
+                  {task.priority}
                 </span>
               </div>
               {task.logged_hours > 0 && (

@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:view_name",
- "creation": "2025-07-01 12:00:00.000000",
+ "creation": "2025-07-01 12:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -19,6 +19,7 @@
   {
    "fieldname": "view_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "View Name",
    "reqd": 1,
    "unique": 1
@@ -27,6 +28,7 @@
    "default": "__user",
    "fieldname": "user",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "User",
    "options": "User",
    "reqd": 1
@@ -34,6 +36,7 @@
   {
    "fieldname": "reference_doctype",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Reference DocType",
    "options": "Task\nProject",
    "reqd": 1
@@ -54,7 +57,7 @@
    "label": "Sort Order (JSON)"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "is_default",
    "fieldtype": "Check",
    "label": "Is Default View"
@@ -62,7 +65,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-01 12:00:00.000000",
+ "modified": "2025-07-13 12:56:43.985927",
  "modified_by": "Administrator",
  "module": "Arkone Projects",
  "name": "Board View Config",
