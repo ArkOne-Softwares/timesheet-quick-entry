@@ -392,23 +392,6 @@ export default function Tasks({ tasks: tasksProp }) {
                     align-items: center;
                     margin-bottom: 1.5rem;
                 }
-                .project-title {
-                    font-size: 1.5rem;
-                    font-weight: 600;
-                    margin: 0;
-                }
-                .add-task-btn {
-                    background-color: #4299e1;
-                    color: white;
-                    border: none;
-                    padding: 0.5rem 1rem;
-                    border-radius: 0.375rem;
-                    cursor: pointer;
-                    font-weight: 500;
-                }
-                .add-task-btn:hover {
-                    background-color: #3182ce;
-                }
                 .empty-state {
                     display: flex;
                     justify-content: center;
@@ -547,23 +530,6 @@ export default function Tasks({ tasks: tasksProp }) {
                 }
                 .status-btn:hover:not(:disabled) {
                     background-color: #e5ecff;
-                }
-                .assign-task-btn {
-                    background-color: #3b82f6;
-                    color: white;
-                    border: none;
-                    padding: 0.5rem 1rem;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                    transition: background-color 0.2s;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                }
-
-                .assign-task-btn:hover {
-                    background-color: #2563eb;
                 }
                 .status-dropdown-container {
                     position: relative;

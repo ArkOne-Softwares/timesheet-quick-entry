@@ -337,7 +337,7 @@ const KanbanBoard = ({ tasks = [] }) => {
               setShowAddTaskForm(true);
             }}
             title="Add Task"
-            style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+            style={{ fontSize: '0.75rem', padding: '6px 8px' }}
           >
             <FaPlus />
           </button>

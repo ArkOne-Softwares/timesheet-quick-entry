@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SearchInput from './SearchInput.jsx';
 
 export default function AddProjectForm({ onCancel, onSuccess }) {
     const [formData, setFormData] = useState({
@@ -15,7 +16,6 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [departments, setDepartments] = useState([]);
-    const [customers, setCustomers] = useState([]);
     const [loadingOptions, setLoadingOptions] = useState(true);
 
     // Fetch departments and customers on component mount
@@ -35,15 +35,6 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
             if (deptResponse.message?.success) {
                 setDepartments(deptResponse.message.departments || []);
             }
-            
-            // Fetch customers
-            const custResponse = await frappe.call({
-                method: 'arkone_projects.arkone_projects.api.get_customers'
-            });
-            
-            if (custResponse.message?.success) {
-                setCustomers(custResponse.message.customers || []);
-            }
         } catch (err) {
             console.error('Error fetching dropdown options:', err);
         } finally {
@@ -56,6 +47,59 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
         setFormData(prev => ({
             ...prev,
             [name]: value
+        }));
+    };
+
+    // Search function for project types
+    const searchProjectTypes = async (query) => {
+        try {
+            const response = await frappe.call({
+                method: 'arkone_projects.arkone_projects.api.search_project_types',
+                args: { query }
+            });
+            
+            if (response.message?.success) {
+                return response.message.project_types || [];
+            }
+            return [];
+        } catch (err) {
+            console.error('Error searching project types:', err);
+            return [];
+        }
+    };
+
+    // Search function for customers
+    const searchCustomers = async (query) => {
+        try {
+            const response = await frappe.call({
+                method: 'arkone_projects.arkone_projects.api.search_customers',
+                args: { query }
+            });
+            
+            if (response.message?.success) {
+                return response.message.customers || [];
+            }
+            return [];
+        } catch (err) {
+            console.error('Error searching customers:', err);
+            return [];
+        }
+    };
+
+    // Handle selection from SearchInput components
+    const handleProjectTypeSelect = (projectType) => {
+        setFormData(prev => ({
+            ...prev,
+            project_type: projectType.name,
+            // Clear customer if switching to Internal
+            customer: projectType.name === 'Internal' ? '' : prev.customer
+        }));
+    };
+
+    const handleCustomerSelect = (customer) => {
+        setFormData(prev => ({
+            ...prev,
+            customer: customer.name
         }));
     };
 
@@ -201,15 +245,14 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
                 <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="project_type">Project Type</label>
-                        <select
-                            id="project_type"
-                            name="project_type"
+                        <SearchInput
+                            searchFunction={searchProjectTypes}
+                            onSelect={handleProjectTypeSelect}
+                            placeholder="Search project types..."
                             value={formData.project_type}
-                            onChange={handleChange}
-                        >
-                            <option value="Internal">Internal</option>
-                            <option value="External">External</option>
-                        </select>
+                            getDisplayText={(item) => item.name}
+                            getSubText={(item) => item.description}
+                        />
                     </div>
                     
                     <div className="form-group">
@@ -230,23 +273,18 @@ export default function AddProjectForm({ onCancel, onSuccess }) {
                     </div>
                 </div>
                 
-                {/* Customer Information */}
-                {formData.project_type === 'External' && (
+                {/* Customer Information - Only show if project type is not Internal */}
+                {formData.project_type !== 'Internal' && (
                     <div className="form-group">
                         <label htmlFor="customer">Customer</label>
-                        <select
-                            id="customer"
-                            name="customer"
+                        <SearchInput
+                            searchFunction={searchCustomers}
+                            onSelect={handleCustomerSelect}
+                            placeholder="Search customers..."
                             value={formData.customer}
-                            onChange={handleChange}
-                        >
-                            <option value="">Select Customer (Optional)</option>
-                            {customers.map((cust) => (
-                                <option key={cust.name} value={cust.name}>
-                                    {cust.customer_name || cust.name}
-                                </option>
-                            ))}
-                        </select>
+                            getDisplayText={(item) => item.customer_name || item.name}
+                            getSubText={(item) => item.customer_group}
+                        />
                     </div>
                 )}
                 

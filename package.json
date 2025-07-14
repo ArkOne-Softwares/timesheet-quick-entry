@@ -2,6 +2,10 @@
   "name": "arkone_projects",
   "version": "1.0.0",
   "description": "Simple project management that also add task and timesheet easily",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ArkOne-Softwares/timesheet-quick-entry.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

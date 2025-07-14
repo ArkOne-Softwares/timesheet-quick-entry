@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaClock, FaPlus, FaEdit, FaTrash, FaSave, FaTimes } from 'react-icons/fa';
+import { FaClock, FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaTasks, FaCalendarAlt, FaPlay, FaProjectDiagram, FaUser, FaStopwatch } from 'react-icons/fa';
 
 const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
   const [timesheetEntries, setTimesheetEntries] = useState([]);
@@ -8,14 +8,13 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
   const [departments, setDepartments] = useState([]);
-  const [customers, setCustomers] = useState([]);
   const [activityTypes, setActivityTypes] = useState([]);
   const [projectDetails, setProjectDetails] = useState({});
   const [formData, setFormData] = useState({
     hours: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
-    activity_type: 'Task',
+    activity_type: 'Development',
     department: '',
     customer: ''
   });
@@ -38,20 +37,21 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
         setDepartments(deptResponse.message.departments || []);
       }
 
-      // Fetch customers
-      const custResponse = await frappe.call({
-        method: 'arkone_projects.arkone_projects.api.get_customers'
-      });
-      if (custResponse.message?.success) {
-        setCustomers(custResponse.message.customers || []);
-      }
-
       // Fetch activity types
       const actResponse = await frappe.call({
         method: 'arkone_projects.arkone_projects.api.get_activity_types'
       });
       if (actResponse.message?.success) {
         setActivityTypes(actResponse.message.activity_types || []);
+        
+        // Set the first activity type as default if available
+        const firstActivityType = actResponse.message.activity_types?.[0];
+        if (firstActivityType) {
+          setFormData(prev => ({
+            ...prev,
+            activity_type: firstActivityType.name
+          }));
+        }
       }
 
       // Fetch project details
@@ -63,7 +63,7 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
         const projData = projResponse.message.details;
         setProjectDetails(projData);
         
-        // Set default values from project
+        // Set default values from project (customer will be used automatically in backend)
         setFormData(prev => ({
           ...prev,
           customer: projData.customer || '',
@@ -123,7 +123,7 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
           hours: '',
           description: '',
           date: new Date().toISOString().split('T')[0],
-          activity_type: 'Task',
+          activity_type: activityTypes[0]?.name || 'Development',
           department: projectDetails.department || '',
           customer: projectDetails.customer || ''
         });
@@ -166,7 +166,7 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
           hours: '',
           description: '',
           date: new Date().toISOString().split('T')[0],
-          activity_type: 'Task',
+          activity_type: activityTypes[0]?.name || 'Development',
           department: projectDetails.department || '',
           customer: projectDetails.customer || ''
         });
@@ -228,7 +228,7 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
       hours: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
-      activity_type: 'Task',
+      activity_type: activityTypes[0]?.name || 'Development',
       department: projectDetails.department || '',
       customer: projectDetails.customer || ''
     });
@@ -246,12 +246,20 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
   return (
     <div className="timesheet-form">
       <div className="timesheet-form-header">
-        <div className="timesheet-icon">
-          <FaClock />
+        <div className="timesheet-header-left">
+          <div className="timesheet-icon">
+            <FaClock />
+          </div>
+          <div className="timesheet-header-text">
+            <h3>Timesheet Entries</h3>
+            <span className="timesheet-task-name">{task.subject}</span>
+          </div>
         </div>
-        <h3>Timesheet Entries</h3>
-        <div className="total-hours">
-          Total: {getTotalHours().toFixed(1)} hrs
+        <div className="timesheet-header-right">
+          <div className="total-hours-card">
+            <div className="total-hours-label">Total Hours</div>
+            <div className="total-hours-value">{getTotalHours().toFixed(1)}</div>
+          </div>
         </div>
       </div>
 
@@ -270,47 +278,97 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
           {/* Existing Timesheet Entries */}
           <div className="timesheet-entries">
             {timesheetEntries.length > 0 ? (
-              timesheetEntries.map((entry) => (
-                <div key={entry.name} className="timesheet-entry">
-                  <div className="timesheet-entry-header">
-                    <div className="timesheet-entry-info">
-                      <div className="timesheet-entry-date">
-                        {formatDate(entry.start_date)}
-                      </div>
-                      <div className="timesheet-entry-hours">
-                        {entry.hours}h
-                      </div>
-                    </div>
-                    <div className="timesheet-entry-actions">
-                      <button
-                        className="edit-btn"
-                        onClick={() => startEdit(entry)}
-                        title="Edit Entry"
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        className="delete-btn"
-                        onClick={() => handleDeleteEntry(entry.name)}
-                        title="Delete Entry"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
+              <>
+                <div className="timesheet-entries-header">
+                  <div className="entries-count">
+                    {timesheetEntries.length} {timesheetEntries.length === 1 ? 'entry' : 'entries'}
                   </div>
-                  <div className="timesheet-entry-description">
-                    {entry.description}
+                  <div className="entries-sort">
+                    <span>Recent first</span>
                   </div>
-                  {entry.docstatus === 1 && (
-                    <div className="timesheet-entry-status">
-                      ✓ Submitted
-                    </div>
-                  )}
                 </div>
-              ))
+                {timesheetEntries.map((entry, index) => (
+                  <div key={entry.name} className={`timesheet-entry ${entry.docstatus === 1 ? 'submitted' : 'draft'}`}>
+                    <div className="timesheet-entry-info">
+                      <div className="timesheet-entry-task">
+                        <FaTasks />
+                        {task.subject}
+                      </div>
+                      <div className="timesheet-entry-details">
+                        <div className="timesheet-detail-item">
+                          <FaCalendarAlt />
+                          <span className="timesheet-detail-value">{formatDate(entry.start_date)}</span>
+                        </div>
+                        <div className="timesheet-detail-item">
+                          <FaPlay />
+                          <span className="timesheet-detail-value">{entry.activity_type}</span>
+                        </div>
+                        <div className="timesheet-detail-item">
+                          <FaProjectDiagram />
+                          <span className="timesheet-detail-value">{project.name}</span>
+                        </div>
+                        <div className="timesheet-detail-item">
+                          <FaUser />
+                          <span className="timesheet-detail-value">{entry.employee || 'Self'}</span>
+                        </div>
+                      </div>
+                      {entry.description && (
+                        <div className="timesheet-entry-description">
+                          {entry.description}
+                        </div>
+                      )}
+                    </div>
+                    <div className="timesheet-entry-hours">
+                      <FaStopwatch />
+                      {entry.hours}h
+                    </div>
+                    <div className="timesheet-entry-header">
+                      <div className="entry-right">
+                        <div className="entry-status">
+                          {entry.docstatus === 1 ? (
+                            <span className="status-submitted">
+                              <span className="status-icon">✓</span>
+                              Submitted
+                            </span>
+                          ) : (
+                            <span className="status-draft">
+                              <span className="status-icon">•</span>
+                              Draft
+                            </span>
+                          )}
+                        </div>
+                        <div className="timesheet-entry-actions">
+                          <button
+                            className="action-btn edit-btn"
+                            onClick={() => startEdit(entry)}
+                            title="Edit Entry"
+                            disabled={entry.docstatus === 1}
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            className="action-btn delete-btn"
+                            onClick={() => handleDeleteEntry(entry.name)}
+                            title="Delete Entry"
+                            disabled={entry.docstatus === 1}
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
             ) : (
               <div className="timesheet-no-entries">
-                No timesheet entries found for this task.
+                <div className="no-entries-icon">
+                  <FaClock />
+                </div>
+                <div className="no-entries-text">
+                  <h4>No timesheet entries yet</h4>
+                  <p>Start tracking your time by adding your first entry below.</p>
+                </div>
               </div>
             )}
           </div>
@@ -318,7 +376,15 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
           {/* Add/Edit Form */}
           {showAddForm || editingEntry ? (
             <div className={`timesheet-add-form ${editingEntry ? 'editing' : ''}`}>
-              <h4>{editingEntry ? 'Edit Entry' : 'Add New Entry'}</h4>
+              <div className="add-form-header">
+                <h4 className="add-form-title">
+                  <FaPlus className="add-form-icon" />
+                  {editingEntry ? 'Edit Time Entry' : 'Add New Time Entry'}
+                </h4>
+                {!editingEntry && (
+                  <p className="add-form-subtitle">Record time spent on this task</p>
+                )}
+              </div>
               
               <div className="timesheet-form-row">
                 <div className="timesheet-form-group">
@@ -388,21 +454,6 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
                     ))}
                   </select>
                 </div>
-                <div className="timesheet-form-group">
-                  <label htmlFor="customer">Customer</label>
-                  <select
-                    id="customer"
-                    value={formData.customer}
-                    onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                  >
-                    <option value="">Select Customer</option>
-                    {customers.map(cust => (
-                      <option key={cust.name} value={cust.name}>
-                        {cust.customer_name || cust.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               <div className="timesheet-form-group">
@@ -460,12 +511,15 @@ const TimesheetForm = ({ task, project, onClose, onSuccess }) => {
               </div>
             </div>
           ) : (
-            <button
-              className="timesheet-show-add-btn"
-              onClick={() => setShowAddForm(true)}
-            >
-              <FaPlus /> Add Timesheet Entry
-            </button>
+            <div className="timesheet-add-button">
+              <button
+                className="primary-add-btn"
+                onClick={() => setShowAddForm(true)}
+              >
+                <FaPlus />
+                Add Time Entry
+              </button>
+            </div>
           )}
         </>
       )}

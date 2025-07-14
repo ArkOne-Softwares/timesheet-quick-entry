@@ -11,6 +11,7 @@ export default function FilterBar({
   const [statusFilters, setStatusFilters] = useState([]);
   const [priorityFilters, setPriorityFilters] = useState([]);
   const [projectFilters, setProjectFilters] = useState([]);
+  const [showMyTasks, setShowMyTasks] = useState(false);
   const [sortField, setSortField] = useState('creation');
   const [sortOrder, setSortOrder] = useState('desc');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -50,6 +51,14 @@ export default function FilterBar({
       filtered = filtered.filter(item => projectFilters.includes(item.project));
     }
 
+    // My Tasks filter - show only tasks assigned to current user
+    if (showMyTasks) {
+      const currentUser = frappe.session.user;
+      filtered = filtered.filter(item => 
+        item.assignedUsers && item.assignedUsers.includes(currentUser)
+      );
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let aVal = a[sortField];
@@ -68,7 +77,7 @@ export default function FilterBar({
     });
 
     onFilteredData(filtered);
-  }, [data, searchTerm, statusFilters, priorityFilters, projectFilters, sortField, sortOrder]);
+  }, [data, searchTerm, statusFilters, priorityFilters, projectFilters, showMyTasks, sortField, sortOrder]);
 
   const toggleFilter = (filterArray, setFilterArray, value) => {
     if (filterArray.includes(value)) {
@@ -83,6 +92,7 @@ export default function FilterBar({
     setStatusFilters([]);
     setPriorityFilters([]);
     setProjectFilters([]);
+    setShowMyTasks(false);
     setSortField('creation');
     setSortOrder('desc');
   };
@@ -100,17 +110,52 @@ export default function FilterBar({
           />
         </div>
 
-        {/* Quick filters - desktop only */}
-        <div className="filter-chips" style={{ display: 'none' }}>
-          {statusOptions.map(status => (
-            <button
-              key={status}
-              onClick={() => toggleFilter(statusFilters, setStatusFilters, status)}
-              className={`filter-chip ${statusFilters.includes(status) ? 'active' : ''}`}
-            >
-              {status}
-            </button>
-          ))}
+        {/* Desktop/Tablet Filters */}
+        <div className="desktop-filters">
+          {/* Status Filters */}
+          <div className="filter-group">
+            <label className="filter-label">Status:</label>
+            <div className="filter-chips">
+              {statusOptions.slice(0, 4).map(status => (
+                <button
+                  key={status}
+                  onClick={() => toggleFilter(statusFilters, setStatusFilters, status)}
+                  className={`filter-chip ${statusFilters.includes(status) ? 'active' : ''}`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Priority Filters */}
+          <div className="filter-group">
+            <label className="filter-label">Priority:</label>
+            <div className="filter-chips">
+              {priorityOptions.map(priority => (
+                <button
+                  key={priority}
+                  onClick={() => toggleFilter(priorityFilters, setPriorityFilters, priority)}
+                  className={`filter-chip priority-${priority.toLowerCase()} ${priorityFilters.includes(priority) ? 'active' : ''}`}
+                >
+                  {priority}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* My Tasks Toggle */}
+          <div className="filter-group">
+            <label className="filter-toggle">
+              <input
+                type="checkbox"
+                checked={showMyTasks}
+                onChange={(e) => setShowMyTasks(e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+              <span className="toggle-text">My Tasks</span>
+            </label>
+          </div>
         </div>
 
         {/* Mobile filter toggle */}
@@ -122,8 +167,8 @@ export default function FilterBar({
         </button>
 
         {/* Clear filters */}
-        {(searchTerm || statusFilters.length || priorityFilters.length || projectFilters.length) && (
-          <button onClick={clearAllFilters} className="filter-chip">
+        {(searchTerm || statusFilters.length > 0 || priorityFilters.length > 0 || projectFilters.length > 0 || showMyTasks) && (
+          <button onClick={clearAllFilters} className="clear-filters-btn">
             Clear All
           </button>
         )}
@@ -190,6 +235,19 @@ export default function FilterBar({
                   </div>
                 </div>
               )}
+
+              {/* My Tasks Toggle */}
+              <div className="filter-section">
+                <label className="filter-toggle mobile-toggle">
+                  <input
+                    type="checkbox"
+                    checked={showMyTasks}
+                    onChange={(e) => setShowMyTasks(e.target.checked)}
+                  />
+                  <span className="toggle-slider"></span>
+                  <span className="toggle-text">Show only my tasks</span>
+                </label>
+              </div>
 
               {/* Sort */}
               <div className="filter-section">

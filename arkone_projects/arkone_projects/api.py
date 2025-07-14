@@ -418,10 +418,26 @@ def get_activity_types():
             filters={"disabled": 0},
             order_by="name"
         )
+        
+        # If no activity types found, create a default one
+        if not activity_types:
+            # Create default activity type
+            try:
+                default_activity = frappe.new_doc("Activity Type")
+                default_activity.activity_type = "Development"
+                default_activity.save(ignore_permissions=True)
+                frappe.db.commit()
+                activity_types = [{"name": "Development", "activity_type": "Development"}]
+            except Exception as create_err:
+                frappe.log_error(f"Error creating default activity type: {str(create_err)}")
+                # Return a fallback list
+                activity_types = [{"name": "Development", "activity_type": "Development"}]
+        
         return {"success": True, "activity_types": activity_types}
     except Exception as e:
         frappe.log_error(f"Error fetching activity types: {str(e)}")
-        return {"success": False, "error": str(e)}
+        # Return fallback activity types
+        return {"success": True, "activity_types": [{"name": "Development", "activity_type": "Development"}]}
 
 @frappe.whitelist()
 def validate_department_and_customer(department=None, customer=None):
@@ -884,4 +900,87 @@ def get_tasks_with_assignments(project_name=None):
         
     except Exception as e:
         frappe.log_error(f"Error fetching tasks with assignments: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def get_project_types():
+    """
+    Get all available project types for autocomplete
+    """
+    try:
+        project_types = frappe.get_list("Project Type", 
+            fields=["name", "project_type"], 
+            filters={"disabled": 0},
+            order_by="name"
+        )
+        return {"success": True, "project_types": project_types}
+    except Exception as e:
+        frappe.log_error(f"Error fetching project types: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def search_customers(query=""):
+    """
+    Search customers for autocomplete with query filtering
+    """
+    try:
+        filters = {}
+        
+        # Try to add disabled filter, but handle if field doesn't exist
+        try:
+            # Check if disabled field exists
+            frappe.db.sql("SELECT disabled FROM `tabCustomer` LIMIT 1")
+            filters["disabled"] = 0
+        except:
+            # If disabled field doesn't exist, continue without it
+            pass
+            
+        if query:
+            filters["customer_name"] = ["like", f"%{query}%"]
+        
+        customers = frappe.get_list("Customer", 
+            fields=["name", "customer_name", "customer_group"], 
+            filters=filters,
+            order_by="customer_name",
+            limit=20
+        )
+        return {"success": True, "customers": customers}
+    except Exception as e:
+        frappe.log_error(f"Error searching customers: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def search_project_types(query=""):
+    """
+    Search project types for autocomplete with query filtering
+    """
+    try:
+        # For project types, we'll provide a simple list since ERPNext Project Type doctype is basic
+        # Let's check if we have any custom project types first, otherwise use defaults
+        project_types = []
+        
+        try:
+            # Try to get from Project Type doctype if it exists
+            filters = {}
+            if query:
+                filters["name"] = ["like", f"%{query}%"]
+            
+            existing_types = frappe.get_list("Project Type", 
+                fields=["name"], 
+                filters=filters,
+                order_by="name",
+                limit=20
+            )
+            project_types = [{"name": pt.name, "description": ""} for pt in existing_types]
+        except:
+            # If Project Type doctype doesn't exist or has issues, provide defaults
+            default_types = ["Internal", "External"]
+            if query:
+                project_types = [{"name": pt, "description": ""} for pt in default_types if query.lower() in pt.lower()]
+            else:
+                project_types = [{"name": pt, "description": ""} for pt in default_types]
+        
+        return {"success": True, "project_types": project_types}
+    except Exception as e:
+        frappe.log_error(f"Error searching project types: {str(e)}")
         return {"success": False, "error": str(e)}
