@@ -10,19 +10,19 @@
 ## 📸 Screenshots
 
 ### Mobile-First Kanban Board
-![Kanban Board](https://github.com/ArkOne-Softwares/timesheet-quick-entry/blob/main/screenshots/(1).jpg?raw=true)
+![Screenshot 1](https://raw.githubusercontent.com/ArkOne-Softwares/timesheet-quick-entry/refs/heads/develop/screenshots/%20(1).jpg)
 *Drag-and-drop task management with real-time status updates*
 
 ### Professional Timesheet Interface
-![Timesheet Management](https://github.com/ArkOne-Softwares/timesheet-quick-entry/blob/main/screenshots/(2).jpg?raw=true)
+![Screenshot 2](https://raw.githubusercontent.com/ArkOne-Softwares/timesheet-quick-entry/refs/heads/develop/screenshots/%20(2).jpg)
 *Clean, professional timesheet entry with detailed tracking*
 
 ### Advanced Filter System
-![Filter System](https://github.com/ArkOne-Softwares/timesheet-quick-entry/blob/main/screenshots/(3).jpg?raw=true)
+![Screenshot 3](https://raw.githubusercontent.com/ArkOne-Softwares/timesheet-quick-entry/refs/heads/develop/screenshots/%20(3).jpg)
 *Powerful filtering and search capabilities for large project teams*
 
 ### Mobile-Responsive Design
-![Mobile Design](https://github.com/ArkOne-Softwares/timesheet-quick-entry/blob/main/screenshots/(4).jpg?raw=true)
+![Screenshot 4](https://raw.githubusercontent.com/ArkOne-Softwares/timesheet-quick-entry/refs/heads/develop/screenshots/%20(4).jpg)
 *Optimized for mobile devices with touch-friendly interfaces*
 
 ## 🚀 Features
